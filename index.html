@@ -168,7 +168,9 @@ canvas#c{display:block;width:100vw;height:100vh;}
 
 
 /* -- MOBILE TOUCH CONTROLS -- */
-#mobileControls{display:none;position:absolute;inset:0;pointer-events:none;z-index:90;touch-action:none;}
+#mobileControls{display:none;position:fixed;inset:0;pointer-events:none;z-index:59;touch-action:none;}
+body.in-room #mCameraHint{display:block;}
+body.in-room #hotbar{display:none;}
 #joy{position:absolute;left:22px;bottom:28px;width:118px;height:118px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.22);pointer-events:all;touch-action:none;}
 #joyKnob{position:absolute;left:39px;top:39px;width:40px;height:40px;border-radius:50%;background:rgba(255,215,0,.72);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 16px rgba(255,215,0,.25);}
 #mActions{position:absolute;right:14px;bottom:22px;display:grid;grid-template-columns:repeat(3,56px);gap:8px;pointer-events:all;}
@@ -229,7 +231,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
   <div id="wanted"><div id="wantedtxt">⚠ 通缉中</div><div id="wantedlvl">警戒等级: 1</div></div>
 
   <div id="mobileControls" aria-label="mobile controls">
-    <div id="mCameraHint">右侧滑动视角</div>
+    <div id="mCameraHint">右侧滑动视角｜左摇杆移动</div>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="mActions">
       <button class="mbtn alt" data-key="i">包</button>
@@ -795,12 +797,21 @@ function tapKey(k){
   document.dispatchEvent(ev);
   setTimeout(()=>{K[k]=false;document.dispatchEvent(new KeyboardEvent('keyup',{key:k,bubbles:true}));},80);
 }
+function resetMobileMoveKeys(){
+  ['w','a','s','d','shift'].forEach(k=>K[k]=false);
+  const knob=document.getElementById('joyKnob');
+  if(knob) knob.style.transform='translate(0,0)';
+}
 function setupMobileControls(){
   if(!IS_MOBILE) return;
+  const mc=document.getElementById('mobileControls');
+  // Move mobile controls out of #ui so the room/interior overlay cannot cover them.
+  // z-index puts it above #interior, but below dialogs, panels and forge mini-games.
+  if(mc && mc.parentElement!==document.body) document.body.appendChild(mc);
   document.body.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
   const joy=document.getElementById('joy'), knob=document.getElementById('joyKnob');
   let joyId=null, cx=0, cy=0;
-  function resetMove(){['w','a','s','d','shift'].forEach(k=>K[k]=false);knob.style.transform='translate(0,0)';}
+  function resetMove(){resetMobileMoveKeys();}
   function updateJoy(t){
     const dx=t.clientX-cx, dy=t.clientY-cy, max=42;
     const len=Math.hypot(dx,dy)||1, nx=dx/len*Math.min(max,len), ny=dy/len*Math.min(max,len);
@@ -813,8 +824,9 @@ function setupMobileControls(){
   joy.addEventListener('touchcancel',()=>{joyId=null;resetMove();});
 
   document.querySelectorAll('.mbtn').forEach(btn=>{
-    btn.addEventListener('touchstart',e=>{e.preventDefault();tapKey(btn.dataset.key);},{passive:false});
-    btn.addEventListener('click',e=>{e.preventDefault();tapKey(btn.dataset.key);});
+    let lastTouch=0;
+    btn.addEventListener('touchstart',e=>{e.preventDefault();lastTouch=Date.now();tapKey(btn.dataset.key);},{passive:false});
+    btn.addEventListener('click',e=>{e.preventDefault();if(Date.now()-lastTouch>450) tapKey(btn.dataset.key);});
   });
   document.querySelectorAll('.hs').forEach((el,idx)=>{
     el.addEventListener('touchstart',e=>{e.preventDefault();G.activeSlot=idx;updateHotbar();},{passive:false});
@@ -841,11 +853,11 @@ document.addEventListener('keydown',e=>{
     else if(document.getElementById('fgame').style.display==='flex') fgSpacePress();
   }
   if(k==='e') doInteract();
-  if(k==='i'&&!G.inRoom) openPanel('inv');
+  if(k==='i') openPanel('inv');
   if(k==='u') openPanel('skills');
-  if(k==='g'&&!G.inRoom) openPanel('gang');
+  if(k==='g') openPanel('gang');
   if(k==='m') openMapPanel();
-  if(k==='p'&&!G.inRoom) openPanel('props');
+  if(k==='p') openPanel('props');
   if(k==='f'&&!G.sleeping) openFG();
   if(k==='b') trySleep();
   if(k==='escape') closeAll();
@@ -1212,6 +1224,8 @@ function addRoomNPC(role,x,y,z,emoji){
 function enterBuilding(bld){
   buildInterior(bld.int);
   G.inRoom=true;G.curRoom=bld;
+  document.body.classList.add('in-room');
+  resetMobileMoveKeys();
   document.getElementById('interior').style.display='block';
   document.getElementById('rtitle').textContent=bld.n;
   document.getElementById('ihint').style.display='none';
@@ -1223,6 +1237,8 @@ function enterBuilding(bld){
 document.getElementById('exitbtn').onclick=()=>exitBuilding();
 function exitBuilding(){
   G.inRoom=false;G.curRoom=null;G.nearIItem=null;
+  document.body.classList.remove('in-room');
+  resetMobileMoveKeys();
   document.getElementById('interior').style.display='none';
   document.getElementById('ihint').style.display='none';
   if(iAnim){cancelAnimationFrame(iAnim);iAnim=null;}
@@ -1256,7 +1272,7 @@ function iLoop(){
   const irg=new THREE.Vector3(Math.cos(G.iyaw),0,-Math.sin(G.iyaw));
   const imv=new THREE.Vector3();
   if(K['w']) imv.add(ifwd);if(K['s']) imv.sub(ifwd);if(K['a']) imv.sub(irg);if(K['d']) imv.add(irg);
-  if(imv.length()>.01){imv.normalize();G.ipx+=imv.x*3*dt;G.ipz+=imv.z*3*dt;}
+  if(imv.length()>.01){imv.normalize();const ispd=K['shift']?4.8:3;G.ipx+=imv.x*ispd*dt;G.ipz+=imv.z*ispd*dt;}
   G.ipx=Math.max(-5.8,Math.min(5.8,G.ipx));G.ipz=Math.max(-5.5,Math.min(5.8,G.ipz));
   ICAM.position.set(G.ipx,1.65,G.ipz);
   ICAM.rotation.set(G.ipitch,G.iyaw,0,'YXZ');
