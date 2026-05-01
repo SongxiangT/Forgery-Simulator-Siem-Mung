@@ -1,0 +1,3105 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>Forgery Simulator v4</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif;user-select:none;}
+canvas#c{display:block;width:100vw;height:100vh;}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:10;}
+
+/* -- HUD -- */
+#hud{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:5px;}
+.sb{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.78);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:4px 10px;min-width:185px;backdrop-filter:blur(5px);}
+.sl{color:#aaa;font-size:11px;min-width:52px;}
+.bt{flex:1;height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;}
+.bf{height:100%;border-radius:4px;transition:width .3s,background .5s;}
+.bv{color:#fff;font-size:11px;min-width:28px;text-align:right;}
+
+/* -- HOTBAR -- */
+#hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px;}
+.hs{width:50px;height:50px;border-radius:8px;border:1.5px solid rgba(255,255,255,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;position:relative;background:rgba(255,255,255,.04);transition:all .2s;}
+.hs.on{border-color:#ffd700;background:rgba(255,215,0,.14);box-shadow:0 0 10px rgba(255,215,0,.25);}
+.hk{position:absolute;top:1px;left:4px;font-size:8px;color:#666;}
+.hc{position:absolute;bottom:1px;right:3px;font-size:9px;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:0 2px;}
+
+/* -- PANEL -- */
+.panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(5,7,16,.97);border:1px solid rgba(255,255,255,.17);border-radius:16px;padding:22px;width:510px;max-height:85vh;overflow-y:auto;display:none;pointer-events:all;z-index:65;backdrop-filter:blur(16px);box-shadow:0 24px 60px rgba(0,0,0,.7);}
+.panel::-webkit-scrollbar{width:4px;}.panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:2px;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08);}
+.ph h2{color:#ffd700;font-size:15px;letter-spacing:.4px;}
+.pclose{background:none;border:none;color:#555;cursor:pointer;font-size:20px;transition:color .2s;padding:2px 6px;border-radius:4px;}
+.pclose:hover{color:#fff;}
+
+/* -- INTERIOR -- */
+#interior{position:fixed;inset:0;background:#000;z-index:50;display:none;pointer-events:all;}
+#ic{display:block;width:100%;height:100%;}
+#iui{position:absolute;inset:0;pointer-events:none;}
+#exitbtn{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.78);border:1px solid rgba(255,255,255,.22);color:#fff;padding:8px 18px;border-radius:9px;cursor:pointer;font-size:13px;pointer-events:all;transition:all .2s;}
+#exitbtn:hover{background:rgba(255,255,255,.1);}
+#rtitle{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.3);color:#ffd700;padding:7px 22px;border-radius:9px;font-size:14px;white-space:nowrap;}
+#ihint{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.22);color:#fff;padding:8px 20px;border-radius:9px;font-size:13px;display:none;white-space:nowrap;pointer-events:none;}
+
+/* -- FORGE GAME -- */
+#fgame{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:70;display:none;align-items:center;justify-content:center;}
+#fginner{width:560px;background:rgba(7,9,20,.99);border:1px solid rgba(255,150,0,.3);border-radius:18px;padding:26px;box-shadow:0 0 50px rgba(255,100,0,.12);}
+#fgtitle{color:#ffd700;font-size:17px;margin-bottom:4px;}
+#fgsub{color:#666;font-size:12px;margin-bottom:18px;}
+#fgsteps{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;}
+.fgs{display:flex;align-items:center;gap:11px;padding:10px 14px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.02);transition:all .25s;}
+.fgs.active{border-color:#f97316;background:rgba(249,115,22,.1);box-shadow:0 0 12px rgba(249,115,22,.12);}
+.fgs.done{border-color:#4ade80;background:rgba(74,222,128,.06);}
+.fgsi{font-size:22px;width:32px;text-align:center;}
+.fgsn{flex:1;color:#ddd;font-size:13px;}
+.fgsp{color:#666;font-size:11px;width:40px;text-align:right;}
+.fgsb{width:100px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.fgsbf{height:100%;border-radius:3px;}
+#fgact{text-align:center;margin-top:4px;}
+#fgbtn{background:rgba(249,115,22,.14);border:2px solid #f97316;color:#f97316;padding:12px 36px;border-radius:10px;font-size:14px;cursor:pointer;transition:all .15s;letter-spacing:.3px;pointer-events:all;}
+#fgbtn:hover{background:rgba(249,115,22,.3);}
+#fgbtn:active{transform:scale(.95);}
+#fghint{color:#555;font-size:11px;margin-top:7px;}
+#fgres{text-align:center;padding:22px;display:none;}
+#fgri{font-size:56px;margin-bottom:8px;}
+#fgrt{color:#4ade80;font-size:17px;}
+#fgrd{color:#888;font-size:12px;margin-top:5px;}
+
+/* -- DIALOG -- */
+#dlg{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:480px;max-width:95vw;background:rgba(8,10,22,.96);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:14px 16px;display:none;pointer-events:all;z-index:60;}
+#dlghdr{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+#dlgport{font-size:26px;flex-shrink:0;}
+#dlgname{color:#ffd700;font-size:13px;font-weight:600;}
+#dlgrole{color:#666;font-size:10px;margin-top:2px;}
+#dlgtxt{color:#e0e0e0;font-size:13px;line-height:1.7;min-height:40px;}
+#dlgload{color:#555;font-size:12px;font-style:italic;padding:6px 0;}
+#dlgch{display:flex;flex-direction:column;gap:5px;margin-top:11px;}
+.dc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 12px;color:#ccc;font-size:12px;cursor:pointer;text-align:left;transition:background .12s;pointer-events:all;width:100%;}
+.dc:hover{background:rgba(255,255,255,.11);color:#fff;border-color:rgba(255,255,255,.24);}
+
+/* -- NOTIFY -- */
+#notifs{position:fixed;top:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:200;min-width:320px;max-width:480px;}
+.nf{background:rgba(10,12,28,.93);border:1.5px solid #4ade80;padding:10px 22px;border-radius:50px;color:#fff;font-size:14px;font-weight:500;animation:nfa 3.5s forwards;backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.5);text-align:center;letter-spacing:.2px;white-space:nowrap;}
+.nf.w{border-color:#f97316;color:#fed7aa;}.nf.d{border-color:#ef4444;color:#fca5a5;background:rgba(60,5,5,.93);}.nf.i{border-color:#60a5fa;color:#bfdbfe;}.nf.g{border-color:#a78bfa;color:#ddd6fe;}
+@keyframes nfa{0%{opacity:0;transform:translateY(-12px) scale(.92);}8%{opacity:1;transform:translateY(0) scale(1);}80%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-8px) scale(.95);}}
+
+/* -- MINIMAP -- */
+#mmap{position:absolute;top:10px;right:13px;width:115px;height:115px;border-radius:50%;overflow:hidden;border:1.5px solid rgba(255,255,255,.22);background:rgba(8,18,8,.9);}
+
+/* -- INTERACT HINT -- */
+#ihintw{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 20px;border-radius:9px;font-size:12px;display:none;pointer-events:none;white-space:nowrap;}
+
+/* -- QUEST LOG -- */
+#qlog{position:absolute;top:10px;right:138px;background:rgba(0,0,0,.72);border:1px solid rgba(255,215,0,.22);border-radius:9px;padding:9px 13px;max-width:200px;pointer-events:none;}
+#qlogt{color:#ffd700;font-size:11px;margin-bottom:5px;letter-spacing:.3px;}
+.qi{color:#bbb;font-size:10px;padding:2px 0;display:flex;gap:6px;}
+.qi.done{color:#4ade80;text-decoration:line-through;opacity:.5;}
+
+/* -- CONTROLS -- */
+#ctrl{position:absolute;bottom:12px;right:13px;background:rgba(0,0,0,.65);border-radius:8px;padding:7px 11px;font-size:10px;color:#666;line-height:1.85;}
+
+/* -- NEWS TICKER -- */
+#ticker{position:absolute;bottom:68px;left:0;right:0;background:rgba(0,0,0,.62);padding:5px 14px;font-size:11px;color:#f97316;overflow:hidden;white-space:nowrap;pointer-events:none;}
+.ticki{display:inline-block;animation:ticka 38s linear infinite;}
+@keyframes ticka{from{transform:translateX(100vw);}to{transform:translateX(-200%)}}
+
+/* -- STORY -- */
+#story{position:fixed;inset:0;background:rgba(0,0,10,.97);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;}
+#storyn{color:#ffd700;font-size:12px;letter-spacing:2px;text-transform:uppercase;}
+#storyt{color:#ddd;font-size:17px;text-align:center;max-width:520px;line-height:1.9;white-space:pre-line;}
+#storybtn{background:none;border:1px solid rgba(255,255,255,.25);color:#aaa;padding:10px 28px;border-radius:8px;cursor:pointer;font-size:13px;pointer-events:all;transition:all .2s;}
+#storybtn:hover{background:rgba(255,255,255,.07);color:#fff;}
+
+/* -- SLEEP -- */
+#sleepov{position:fixed;inset:0;background:rgba(0,0,20,0);display:none;align-items:center;justify-content:center;z-index:80;transition:background 1.3s;flex-direction:column;gap:14px;}
+#sleepov.on{background:rgba(0,0,20,.97);}
+#sleept{color:#93c5fd;font-size:22px;text-align:center;}
+
+/* -- INVESTIGATION OVERLAY -- */
+#invest{position:fixed;inset:0;background:rgba(0,0,0,0);pointer-events:none;z-index:5;transition:background .5s;}
+#invest.active{background:rgba(200,0,0,.06);}
+#investbar{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,0,0,.0);transition:background .5s;}
+#investbar.active{background:linear-gradient(90deg,transparent,rgba(255,0,0,.7),transparent);animation:investpulse 1.2s ease-in-out infinite;}
+@keyframes investpulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+
+/* -- TABS -- */
+.tabs{display:flex;gap:4px;margin-bottom:14px;}
+.tab{flex:1;padding:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:#888;font-size:12px;cursor:pointer;text-align:center;transition:all .2s;pointer-events:all;}
+.tab.on{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.4);color:#ffd700;}
+
+/* -- STAT CARDS -- */
+.statcards{display:flex;gap:8px;margin-bottom:14px;}
+.statcard{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px;text-align:center;}
+.stcv{font-size:18px;font-weight:700;margin-bottom:2px;}
+.stcl{color:#888;font-size:10px;}
+
+/* -- SHOP -- */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.scard{border:1px solid rgba(255,255,255,.11);border-radius:10px;padding:11px;display:flex;align-items:center;gap:9px;cursor:pointer;background:rgba(255,255,255,.03);transition:all .2s;pointer-events:all;}
+.scard:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);}
+
+/* -- PROP CARD -- */
+.pcard{border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:13px;margin-bottom:10px;background:rgba(255,255,255,.02);}
+.pname{color:#ffd700;font-size:14px;font-weight:600;}
+.pinfo{color:#777;font-size:11px;margin-top:3px;}
+.pprice{color:#4ade80;font-size:13px;margin-top:7px;}
+.pbuy{background:rgba(74,222,128,.1);border:1px solid #4ade80;color:#4ade80;padding:6px 16px;border-radius:7px;cursor:pointer;font-size:12px;transition:all .2s;margin-top:8px;pointer-events:all;display:inline-block;}
+.pbuy:hover{background:rgba(74,222,128,.22);}
+.pbuy.owned{background:rgba(96,165,250,.1);border-color:#60a5fa;color:#60a5fa;cursor:default;}
+
+/* -- SELL -- */
+.sellrow{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid rgba(255,255,255,.09);border-radius:9px;margin-bottom:7px;background:rgba(255,255,255,.02);}
+.rbadge{font-size:10px;padding:2px 8px;border-radius:4px;}
+.rlo{background:rgba(74,222,128,.15);color:#4ade80;}
+.rmd{background:rgba(249,115,22,.15);color:#f97316;}
+.rhi{background:rgba(239,68,68,.15);color:#ef4444;}
+
+/* -- SKILL NODE -- */
+.sknode{border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;margin-bottom:7px;transition:all .2s;}
+.sknode:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);}
+.sknode.own{border-color:#4ade80;background:rgba(74,222,128,.06);}
+.sknode.lock{opacity:.35;cursor:not-allowed;}
+
+/* -- GANG -- */
+.gangmem{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;margin-bottom:7px;background:rgba(255,255,255,.02);}
+.gangstat{font-size:11px;color:#888;}
+
+/* -- POLICE WANTED -- */
+#wanted{position:absolute;top:50%;right:14px;transform:translateY(-50%);background:rgba(139,0,0,.85);border:2px solid #ef4444;border-radius:10px;padding:10px 14px;display:none;pointer-events:none;text-align:center;}
+#wantedtxt{color:#fff;font-size:12px;font-weight:600;}
+#wantedlvl{color:#fca5a5;font-size:10px;margin-top:3px;}
+
+
+/* -- MOBILE TOUCH CONTROLS -- */
+#mobileControls{display:none;position:absolute;inset:0;pointer-events:none;z-index:90;touch-action:none;}
+#joy{position:absolute;left:22px;bottom:28px;width:118px;height:118px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.22);pointer-events:all;touch-action:none;}
+#joyKnob{position:absolute;left:39px;top:39px;width:40px;height:40px;border-radius:50%;background:rgba(255,215,0,.72);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 16px rgba(255,215,0,.25);}
+#mActions{position:absolute;right:14px;bottom:22px;display:grid;grid-template-columns:repeat(3,56px);gap:8px;pointer-events:all;}
+.mbtn{width:56px;height:48px;border-radius:14px;background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:17px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);touch-action:manipulation;}
+.mbtn.main{background:rgba(249,115,22,.32);border-color:#f97316;color:#fed7aa;}
+.mbtn.alt{background:rgba(96,165,250,.22);border-color:#60a5fa;color:#dbeafe;}
+#mCameraHint{display:none;position:absolute;right:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.45);font-size:11px;background:rgba(0,0,0,.35);padding:6px 9px;border-radius:9px;}
+
+@media (hover:none), (pointer:coarse), (max-width:900px){
+  html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;}
+  #mobileControls{display:block;}
+  #mCameraHint{display:block;}
+  #ctrl{display:none;}
+  #hud{top:8px;left:8px;gap:3px;transform:scale(.82);transform-origin:top left;}
+  .sb{min-width:156px;padding:3px 8px;}
+  #mmap{width:82px;height:82px;right:8px;top:8px;}
+  #qlog{top:96px;right:8px;max-width:148px;padding:7px 9px;}
+  #hotbar{bottom:150px;left:50%;padding:5px;gap:4px;}
+  .hs{width:42px;height:42px;font-size:17px;}
+  #ticker{bottom:0;font-size:10px;padding:4px 8px;}
+  #ihintw{bottom:146px;font-size:11px;max-width:86vw;text-align:center;white-space:normal;}
+  #dlg{bottom:88px;width:92vw;max-height:42vh;overflow:auto;}
+  #dlgch{display:grid!important;grid-template-columns:1fr 1fr;}
+  .dc{padding:9px 10px;font-size:12px;}
+  .panel{width:94vw;max-height:78vh;padding:15px;border-radius:14px;}
+  .sgrid{grid-template-columns:1fr;}
+  #fginner{width:94vw;max-height:88vh;overflow:auto;padding:16px;}
+  #storyt{max-width:88vw;font-size:15px;}
+}
+
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="invest"><div id="investbar"></div></div>
+<div id="ui">
+  <div id="hud">
+    <div class="sb"><span class="sl">💪体力</span><div class="bt"><div class="bf" id="sf"></div></div><span class="bv" id="sv">80</span></div>
+    <div class="sb"><span class="sl">🌡️热度</span><div class="bt"><div class="bf" id="hf" style="background:#f97316"></div></div><span class="bv" id="hv">0</span></div>
+    <div class="sb"><span class="sl">💰金钱</span><div class="bt" style="display:none"></div><span class="bv" id="mv" style="color:#ffd700;min-width:76px">$500</span></div>
+    <div class="sb"><span class="sl">⏰时间</span><div class="bt" style="display:none"></div><span id="tv" style="color:#93c5fd;font-size:12px">06:00</span></div>
+    <div class="sb"><span class="sl">📅日期</span><div class="bt" style="display:none"></div><span id="dv" style="color:#d8b4fe;font-size:11px">第1天</span></div>
+    <div class="sb"><span class="sl">⭐经验</span><div class="bt" style="display:none"></div><span id="spv" style="color:#a78bfa;font-size:11px">0</span></div>
+  </div>
+  <div id="hotbar">
+    <div class="hs on" id="sl0"><span class="hk">1</span>🤜</div>
+    <div class="hs" id="sl1"><span class="hk">2</span><span id="i1"></span><span class="hc" id="c1"></span></div>
+    <div class="hs" id="sl2"><span class="hk">3</span><span id="i2"></span><span class="hc" id="c2"></span></div>
+    <div class="hs" id="sl3"><span class="hk">4</span><span id="i3"></span><span class="hc" id="c3"></span></div>
+    <div class="hs" id="sl4"><span class="hk">5</span><span id="i4"></span><span class="hc" id="c4"></span></div>
+  </div>
+  <div id="notifs"></div>
+  <div id="mmap"><canvas id="mm" width="115" height="115"></canvas></div>
+  <div id="ihintw"></div>
+  <div id="qlog"><div id="qlogt">📋 任务目标</div><div id="qitems"></div></div>
+  <div id="ticker"><span class="ticki" id="ticktxt">📺 Siem Muang晨报：当局发现大量假币流通 || 旧工厂招标中 || 集市今日开放，欢迎各地商贩 || 警方加强巡逻，市民配合检查 || 天气：热带晴，32°C</span></div>
+  <div id="ctrl">WASD移动 | Shift冲刺 | 空格跳跃 | E进入/互动 | F制作<br>I背包 | U技能 | M地图 | G帮派 | P房产 | B睡觉</div>
+  <div id="wanted"><div id="wantedtxt">⚠ 通缉中</div><div id="wantedlvl">警戒等级: 1</div></div>
+
+  <div id="mobileControls" aria-label="mobile controls">
+    <div id="mCameraHint">右侧滑动视角</div>
+    <div id="joy"><div id="joyKnob"></div></div>
+    <div id="mActions">
+      <button class="mbtn alt" data-key="i">包</button>
+      <button class="mbtn alt" data-key="u">技</button>
+      <button class="mbtn alt" data-key="m">图</button>
+      <button class="mbtn main" data-key="e">交互</button>
+      <button class="mbtn main" data-key="f">制作</button>
+      <button class="mbtn main" data-key="space">跳</button>
+      <button class="mbtn" data-key="g">帮</button>
+      <button class="mbtn" data-key="p">房</button>
+      <button class="mbtn" data-key="b">睡</button>
+    </div>
+  </div>
+
+</div>
+<!-- Panels -->
+<div class="panel" id="panel"><div class="ph"><h2 id="ptitle">背包</h2><button class="pclose" id="pclose">✕</button></div><div id="pcontent"></div></div>
+<!-- Interior -->
+<div id="interior"><canvas id="ic"></canvas>
+  <div id="iui"><button id="exitbtn"><- 离开</button><div id="rtitle">室内</div><div id="ihint">按 E 互动</div></div>
+</div>
+<!-- Forge game -->
+<div id="fgame">
+  <div id="fginner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div id="fgtitle" style="color:#ffd700;font-size:16px;">🖨️ 制作假币</div>
+      <div id="fg-timeinfo" style="color:#888;font-size:11px;"></div>
+    </div>
+    <div id="fgsub" style="color:#666;font-size:11px;margin-bottom:14px;"></div>
+    <!-- Step progress bar -->
+    <div id="fg-steps-bar" style="display:flex;gap:4px;margin-bottom:14px;"></div>
+    <!-- Main interactive area -->
+    <div id="fg-interactive" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:18px;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+      <div id="fg-step-icon" style="font-size:40px;"></div>
+      <div id="fg-step-name" style="color:#ddd;font-size:14px;text-align:center;"></div>
+      <div id="fg-mini-area" style="width:100%;"></div>
+    </div>
+    <!-- Progress of current step -->
+    <div style="margin-top:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span id="fg-progress-label" style="color:#888;font-size:11px;">进度</span>
+        <span id="fg-progress-pct" style="color:#f97316;font-size:11px;">0%</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;">
+        <div id="fg-progress-fill" style="height:100%;background:linear-gradient(90deg,#f97316,#ffd700);border-radius:4px;width:0%;transition:width .1s;"></div>
+      </div>
+    </div>
+    <!-- Result screen -->
+    <div id="fgres" style="text-align:center;padding:20px;display:none;">
+      <div id="fgri" style="font-size:52px;margin-bottom:8px;"></div>
+      <div id="fgrt" style="color:#4ade80;font-size:17px;"></div>
+      <div id="fgrd" style="color:#888;font-size:12px;margin-top:5px;"></div>
+      <button onclick="closeFG()" style="margin-top:16px;background:rgba(74,222,128,.1);border:1px solid #4ade80;color:#4ade80;padding:9px 26px;border-radius:9px;cursor:pointer;font-size:13px;pointer-events:all;">完成 ✓</button>
+    </div>
+  </div>
+</div>
+<!-- Dialog -->
+<div id="dlg">
+  <div id="dlghdr" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span id="dlgport"></span>
+    <span id="dlgname" style="color:#ffd700;font-size:13px;font-weight:600;flex:1;"></span>
+    <span id="dlgload" style="display:none;color:#555;font-size:11px;">思考中...</span>
+    <button onclick="closeDlg()" style="background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:0 2px;pointer-events:all;line-height:1;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#555'">✕</button>
+  </div>
+  <div id="dlgtxt" style="color:#ddd;font-size:13px;line-height:1.6;margin-bottom:10px;min-height:36px;"></div>
+  <div id="dlgch" style="display:flex;flex-direction:column;gap:4px;"></div>
+</div>
+<!-- Story -->
+<div id="story"><div id="storyn">序章</div><div id="storyt"></div><button id="storybtn">继续 -></button></div>
+<!-- Sleep -->
+<div id="sleepov"><div id="sleept">💤 休眠中...<br><span style="font-size:14px;color:#445">体力恢复中</span></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+const G={
+  // Stats
+  st:80,maxSt:100,heat:0,maxHeat:100,money:200,
+  timeMin:360,day:1,
+  // Skills
+  // Experience-based skill system
+  exp:0,// total craft experience
+  lastPrayDay:-99,// day of last prayer (cooldown 3 days)
+  skills:{basicForgery:true,midForgery:false,advForgery:false,streetLaunder:false,finance1:false,finance2:false,autoPress:false,gangRecruit:false},
+  sp:3,// kept for quest rewards compatibility
+  // Inventory
+  inventory:[{id:'hands',icon:'🤜',n:'空手',cnt:1},{id:'paper',icon:'📄',n:'纸张',cnt:10},{id:'ink',icon:'🖊️',n:'墨水',cnt:5},null,null],
+  fakeGoods:[],
+  ownedBlds:[],
+  gang:[],
+  activeSlot:0,
+  // Navigation
+  nearB:null,nearNPC:null,nearIItem:null,
+  inRoom:false,curRoom:null,
+  sleeping:false,
+  // Camera
+  pyaw:0,ppitch:-.22,plocked:false,
+  iyaw:Math.PI,ipitch:0,ilocked:false,ipx:0,ipz:3.5,
+  // Physics
+  ppos:new THREE.Vector3(0,0,-30),pvy:0,onGnd:true,wc:0,
+  // Dialog
+  dlgHist:[],curNPC:null,
+  // Story flags
+  sf:{metMom:false,metUncle:false,uncle1:false,sold1:false,policeWarn:false,gangUnlocked:false,paid:false},
+  // Quests
+  quests:[
+    // 第一章: 开始
+    {id:'q1',txt:'【第一章】去家里找叔叔达拉',done:false,reward:1,chapter:1},
+    {id:'q2',txt:'【第一章】从叔叔处学习基础制作',done:false,reward:2,chapter:1},
+    {id:'q3',txt:'【第一章】在家制作台完成第一件假币',done:false,reward:2,chapter:1},
+    {id:'q4',txt:'【第一章】去市场找宋叔卖掉第一件赃品',done:false,reward:2,chapter:1},
+    // 第二章: 扩张
+    {id:'q5',txt:'【第二章】在医院为母亲索碧亚支付$800手术费',done:false,reward:5,chapter:2},
+    {id:'q6',txt:'【第二章】购买第一工厂（$3500）',done:false,reward:3,chapter:2},
+    {id:'q7',txt:'【第二章】招募第一名帮派成员',done:false,reward:2,chapter:2},
+    {id:'q8',txt:'【第二章】完成5件中级伪造品（假20元）',done:false,reward:3,chapter:2,cnt:0,need:5},
+    // 第三章: 危机
+    {id:'q9',txt:'【第三章】在银行洗钱一次（需金融初级）',done:false,reward:3,chapter:3},
+    {id:'q10',txt:'【第三章】购买一栋仓库',done:false,reward:3,chapter:3},
+    {id:'q11',txt:'【第三章】去寺庙祈祷降低热度',done:false,reward:2,chapter:3},
+    {id:'q12',txt:'【第三章】制作假100元（需高级伪造技能）',done:false,reward:5,chapter:3},
+  ],
+  // Production
+  autoProducing:false,autoProdTimer:0,
+  // Police investigation level
+  investLevel:0, // 0-4
+  investTimer:0,
+  // Stats tracking
+  totalMade:0,totalSold:0,totalEarned:0,
+  // Interior items
+  iItems:[],
+  storage:{money:0,items:[]},// chest storage
+  // Active ticker index
+  tickerIdx:0,
+};
+
+// ============================================================
+// RENDERER / SCENE SETUP
+// ============================================================
+const cv=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+R.setSize(innerWidth,innerHeight);R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.setPixelRatio(Math.min(devicePixelRatio,1.8));
+const S=new THREE.Scene();S.background=new THREE.Color(0x87ceeb);S.fog=new THREE.FogExp2(0x87ceeb,.0055);
+const CAM=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,300);
+const CLK=new THREE.Clock();
+
+// Interior renderer
+const ic=document.getElementById('ic');
+const IR=new THREE.WebGLRenderer({canvas:ic,antialias:true});
+IR.setSize(innerWidth,innerHeight);IR.shadowMap.enabled=true;
+const IS=new THREE.Scene();
+const ICAM=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,60);
+const ICLK=new THREE.Clock();
+let iAnim=null;
+
+window.addEventListener('resize',()=>{
+  R.setSize(innerWidth,innerHeight);CAM.aspect=innerWidth/innerHeight;CAM.updateProjectionMatrix();
+  if(G.inRoom){IR.setSize(innerWidth,innerHeight);ICAM.aspect=innerWidth/innerHeight;ICAM.updateProjectionMatrix();}
+});
+
+// ============================================================
+// LIGHTING
+// ============================================================
+const ambL=new THREE.AmbientLight(0xfff4e0,.55);S.add(ambL);
+const sun=new THREE.DirectionalLight(0xffd28c,1.3);
+sun.position.set(50,80,30);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=280;
+S.add(sun);
+S.add(new THREE.HemisphereLight(0x87ceeb,0x558833,.35));
+
+// ============================================================
+// WORLD HELPERS
+// ============================================================
+const MC={};
+function mat(c,r=.85,m=0,tr=false,op=1){
+  const k=`${c}_${r}_${m}`;
+  if(!MC[k]) MC[k]=new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m,transparent:tr,opacity:op});
+  return MC[k];
+}
+function box(w,h,d,c,x,y,z,ry=0,r=.85,sc=S){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,r));
+  mesh.position.set(x,y,z);mesh.rotation.y=ry;mesh.castShadow=true;mesh.receiveShadow=true;sc.add(mesh);return mesh;
+}
+function cyl(rt,rb,h,seg,c,x,y,z,sc=S){
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(c));
+  mesh.position.set(x,y,z);mesh.castShadow=true;sc.add(mesh);return mesh;
+}
+function sph(r,c,x,y,z,ro=.7,sc=S){
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),mat(c,ro));
+  mesh.position.set(x,y,z);mesh.castShadow=true;sc.add(mesh);return mesh;
+}
+function plane(w,d,c,x,y,z,rx=-Math.PI/2,sc=S){
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat(c,.92));
+  mesh.rotation.x=rx;mesh.position.set(x,y,z);mesh.receiveShadow=true;sc.add(mesh);return mesh;
+}
+function sprite(txt,col='#fff',size=2.6,sc=S){
+  const c2=document.createElement('canvas');c2.width=256;c2.height=56;
+  const ctx=c2.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,.7)';if(ctx.roundRect)ctx.roundRect(2,4,252,48,8);else ctx.fillRect(2,4,252,48);ctx.fill();
+  ctx.fillStyle=col;ctx.font='bold 17px Arial';ctx.textAlign='center';ctx.fillText(txt,128,34);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c2),transparent:true}));
+  sp.scale.set(size,.56,1);sc.add(sp);return sp;
+}
+
+// ============================================================
+// GROUND, ROADS, SIDEWALKS
+// ============================================================
+plane(300,300,0x6e9450,0,-0.01,0);
+// grass patches
+[[20,40],[-20,40],[40,20],[-40,-20],[10,-50],[-10,-50]].forEach(([gx,gz])=>plane(12,12,0x5a8840,gx,.02,gz));
+
+function road(w,d,x,z,ry=0){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat(0x4a4845,.93));
+  m.rotation.x=-Math.PI/2;m.rotation.z=ry;m.position.set(x,.015,z);m.receiveShadow=true;S.add(m);
+  for(let i=-d/2+7;i<d/2;i+=10){
+    const ln=new THREE.Mesh(new THREE.PlaneGeometry(.13,4.5),mat(0xddcc88,.9));
+    ln.rotation.x=-Math.PI/2;ln.rotation.z=ry;ln.position.set(x+Math.sin(ry)*i,.025,z+Math.cos(ry)*i);S.add(ln);
+  }
+}
+road(140,8,0,0);road(8,140,0,0,Math.PI/2);
+road(60,6,18,22);road(60,6,18,-22);road(6,60,32,0,Math.PI/2);road(6,60,-24,0,Math.PI/2);
+road(40,6,45,-42);// temple approach
+// Sidewalks
+[[0,7],[0,-7],[7,0],[-7,0]].forEach(([sx,sz])=>{
+  plane(sz===0?3:140,sx===0?3:140,0xcac0a8,sx,.025,sz);
+});
+
+// ============================================================
+// BUILDING DATA & CONSTRUCTION
+// ============================================================
+const BLDS=[
+  {id:'home',n:'阿南的家',own:'你',price:0,x:0,z:-37,w:10,h:6,d:10,col:0xd08860,rcol:0xa86840,int:'home',bought:true,canWork:false},
+  {id:'factory',n:'第一工厂',own:'工厂主索卡',price:3500,x:32,z:0,w:16,h:8,d:13,col:0x7a8a6a,rcol:0x556644,int:'factory',bought:false,canWork:true,workPay:25,workHours:5,workStCost:50},
+  {id:'factory2',n:'第二工厂',own:'工厂主万纳',price:4200,x:32,z:22,w:16,h:8,d:13,col:0x8a7a6a,rcol:0x665544,int:'factory',bought:false,canWork:true,workPay:25,workHours:5,workStCost:50},
+  {id:'wh1',n:'蓝顶仓库A',own:'仓库主达龙',price:2200,x:-38,z:8,w:14,h:6,d:9,col:0x5577aa,rcol:0x3355aa,int:'warehouse',bought:false,canWork:true,workPay:20,workHours:4,workStCost:40},
+  {id:'wh2',n:'蓝顶仓库B',own:'仓库主达龙',price:2400,x:-38,z:22,w:14,h:6,d:9,col:0x5577aa,rcol:0x334488,int:'warehouse',bought:false,canWork:true,workPay:20,workHours:4,workStCost:40},
+  {id:'wh3',n:'蓝顶仓库C',own:'仓库主达龙',price:2600,x:-38,z:36,w:14,h:6,d:9,col:0x5577aa,rcol:0x224477,int:'warehouse',bought:false,canWork:true,workPay:20,workHours:4,workStCost:40},
+  {id:'wh4',n:'蓝顶仓库D',own:'仓库主达龙',price:2800,x:-38,z:50,w:14,h:6,d:9,col:0x5577aa,rcol:0x113366,int:'warehouse',bought:false,canWork:true,workPay:20,workHours:4,workStCost:40},
+  {id:'market',n:'集市大厅',own:'公共',price:0,x:14,z:22,w:22,h:5,d:16,col:0xd4a855,rcol:0xff6622,int:'market',bought:true},
+  {id:'bank',n:'国家银行',own:'政府',price:0,x:-32,z:-20,w:16,h:9,d:12,col:0xe0d8b8,rcol:0xc4b890,int:'bank',bought:true},
+  {id:'hospital',n:'市立医院',own:'政府',price:0,x:-15,z:35,w:18,h:7,d:12,col:0xf0f0f0,rcol:0xdddddd,int:'hospital',bought:true},
+  {id:'police',n:'警察局',own:'政府',price:0,x:-18,z:-38,w:12,h:6,d:9,col:0x3355aa,rcol:0x223388,int:'police',bought:true},
+  {id:'temple',n:'古寺',own:'寺院',price:0,x:50,z:-45,w:22,h:20,d:22,col:0xd0c090,rcol:0xc8b880,int:'temple',bought:true,noAutoBuild:true},
+  {id:'bar',n:'地下酒吧',own:'老余',price:0,x:18,z:-22,w:10,h:4.5,d:8,col:0x3a2a1a,rcol:0x2a1a0a,int:'bar',bought:true},
+];
+
+function buildBuilding(b){
+  if(!b.w||b.noAutoBuild){
+    // Still set up bounds for collision
+    if(b.w) b.bounds={x1:b.x-b.w/2-1,x2:b.x+b.w/2+1,z1:b.z-b.d/2-1,z2:b.z+b.d/2+1};
+    return;
+  }
+  // Main body
+  box(b.w,b.h,b.d,b.col,b.x,b.h/2,b.z);
+  // Roof + overhang
+  box(b.w+1.5,.75,b.d+1.5,b.rcol,b.x,b.h+.38,b.z,0,.7);
+  [-b.w/2-.75,b.w/2+.75].forEach(ox=>box(.75,.65,b.d+1.5,b.rcol*.9|0,b.x+ox,b.h+.75,b.z));
+  [-b.d/2-.75,b.d/2+.75].forEach(oz=>box(b.w+1.5,.65,.75,b.rcol*.9|0,b.x,b.h+.75,b.z+oz));
+  // Door
+  box(1.9,2.9,.15,0x4a3520,b.x,1.45,b.z-b.d/2-.06);
+  box(1.7,2.7,.1,0x3a2810,b.x,1.45,b.z-b.d/2-.04,0,.35);
+  sph(.075,0xddbb44,b.x+.62,1.4,b.z-b.d/2-.15);// door handle
+  // Steps
+  box(b.w*.55,.22,1.3,0xc8b890,b.x,.11,b.z-b.d/2-.68);
+  // Windows
+  const woffs=b.w>14?[-3.5,0,3.5]:[-2.2,2.2];
+  woffs.forEach(wx=>{
+    box(1.5,1.3,.12,0x88bbee,b.x+wx,b.h*.58,b.z-b.d/2-.06,0,.1);
+    box(1.7,1.5,.08,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.09);
+    box(.06,1.3,.14,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.06);
+    box(1.5,.06,.14,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.06);
+  });
+  // Hospital cross
+  if(b.id==='hospital'){
+    box(.5,2.5,.3,0xee2222,b.x,b.h+1.2,b.z-b.d/2-.1);
+    box(2,.5,.3,0xee2222,b.x,b.h+1.2,b.z-b.d/2-.1);
+  }
+  // Police light
+  if(b.id==='police'){
+    const pl=new THREE.PointLight(0x0000ff,.8,8);pl.position.set(b.x,b.h+.5,b.z);S.add(pl);
+    setInterval(()=>{pl.color.setHex(pl.color.getHex()===0x0000ff?0xff0000:0x0000ff);},600);
+  }
+  // Sign
+  const sgcol=b.bought||b.price===0?'#ffd700':'#f97316';
+  const sg=sprite(b.n,sgcol,3.2);sg.position.set(b.x,b.h+1.5,b.z-b.d/2-.2);b.signSp=sg;
+  b.bounds={x1:b.x-b.w/2-1,x2:b.x+b.w/2+1,z1:b.z-b.d/2-1,z2:b.z+b.d/2+1};
+}
+BLDS.forEach(buildBuilding);
+
+// -- Factory 1 extras --
+box(3,2,2,0x333355,30,.75,2);// press body
+box(3,.12,2,0x222233,30,1.76,2);cyl(.9,1.1,7.5,8,0x333330,34,10,2);cyl(.7,.85,2.5,8,0x222220,34,14,2);
+box(7,.22,.9,0x555550,32,.11,3);
+for(let ci=-3;ci<=3;ci++)cyl(.12,.12,1.1,6,0x888888,32+ci,.68,3);
+// -- Factory 2 extras (at x=32,z=22) --
+box(3,2,2,0x333355,30,.75,24);
+box(3,.12,2,0x222233,30,1.76,24);
+cyl(.9,1.1,7.5,8,0x333330,34,10,22);
+cyl(.7,.85,2.5,8,0x222220,34,14,22);
+box(7,.22,.9,0x555550,32,.11,25);
+for(let ci=-3;ci<=3;ci++)cyl(.12,.12,1.1,6,0x888888,32+ci,.68,25);
+// -- Warehouse C/D extras (at z=36 and z=50) --
+[-5,-2,1].forEach(sx=>{box(.2,4.5,8,0x6a5030,sx-38,2.25,36);for(let sh=1;sh<=4;sh++)box(3,.14,1,0x9B8050,sx-38,sh,36);});
+[-5,-2,1].forEach(sx=>{box(.2,4.5,8,0x6a5030,sx-38,2.25,50);for(let sh=1;sh<=4;sh++)box(3,.14,1,0x9B8050,sx-38,sh,50);});
+// -- Market lanterns --
+[[9,5,22],[14,5,22],[19,5,22],[9,5,26],[14,5,26],[19,5,26]].forEach(([lx,ly,lz])=>{
+  cyl(.2,.24,.55,8,0xff5500,lx,ly,lz);
+  const pl=new THREE.PointLight(0xff8800,.55,5);pl.position.set(lx,ly-.25,lz);S.add(pl);
+});
+// -- Bank columns --
+[-11,-8,8,11].forEach(cx=>cyl(.48,.48,8,12,0xf0e8d0,cx-32,4,-15.5));
+box(17,.55,2.5,0xe8e0c8,-32,.28,-16.5);
+// -- Hospital corridor detail --
+box(18,.2,2,0xffffff,-15,.22,29.5);
+// -- Temple --
+const TX=50,TZ=-45;
+box(22,3,22,0xd0c090,TX,1.5,TZ);box(16,3.5,16,0xc8b880,TX,4.75,TZ);
+box(12,5,12,0xc0b070,TX,9,TZ);box(8,6,8,0xb8a860,TX,13.5,TZ);
+cyl(.8,2,3.5,4,0xc8b880,TX,17.75,TZ);cyl(.5,.8,2.5,4,0xbfa860,TX,20.25,TZ);cyl(.25,.5,2,4,0xbfa860,TX,22,TZ);
+[-6.5,6.5].forEach(o=>{box(2.5,7,.9,0xd0c090,TX+o,3.5,TZ-11);box(2.5,7,.9,0xd0c090,TX+o,3.5,TZ+11);});
+[-3.5,0,3.5].forEach(ox=>box(.55,2.5,.35,0xbfaf7a,TX+ox,9,TZ-6.1));
+sprite('⛩ 古寺','#ffd700',3.5).position.set(TX,22,TZ-11.4);
+// -- Bar extras --
+box(6,.6,1,0x1a0a05,18,.3,-25.5);// bar counter inside
+const blinkL=new THREE.PointLight(0xff00aa,.7,6);blinkL.position.set(18,3,-22);S.add(blinkL);
+setInterval(()=>{blinkL.intensity=.3+Math.random()*.7;},200);
+// Bar sign (neon)
+sprite('🍺 地下酒吧','#ff44aa',3).position.set(18,5.5,-18);
+
+// -- Water border (all 4 edges) --
+const waterMat=new THREE.MeshStandardMaterial({color:0x2255aa,roughness:.04,metalness:.25,transparent:true,opacity:.88});
+// North water
+const wN=new THREE.Mesh(new THREE.PlaneGeometry(280,30),waterMat);wN.rotation.x=-Math.PI/2;wN.position.set(0,-.05,-105);S.add(wN);
+// South water
+const wS=new THREE.Mesh(new THREE.PlaneGeometry(280,30),waterMat);wS.rotation.x=-Math.PI/2;wS.position.set(0,-.05,105);S.add(wS);
+// East water
+const wE=new THREE.Mesh(new THREE.PlaneGeometry(30,280),waterMat);wE.rotation.x=-Math.PI/2;wE.position.set(105,-.05,0);S.add(wE);
+// West water (replaces old river)
+const wW=new THREE.Mesh(new THREE.PlaneGeometry(30,280),waterMat);wW.rotation.x=-Math.PI/2;wW.position.set(-105,-.05,0);S.add(wW);
+// Corner pieces
+[[105,-.05,-105],[105,-.05,105],[-105,-.05,-105],[-105,-.05,105]].forEach(([cx,cy,cz])=>{
+  const wc=new THREE.Mesh(new THREE.PlaneGeometry(30,30),waterMat);wc.rotation.x=-Math.PI/2;wc.position.set(cx,cy,cz);S.add(wc);
+});
+// Beach/sand transition strips
+const sandMat=new THREE.MeshStandardMaterial({color:0xd4c090,roughness:.95});
+[[-92,-.02,0,8,200],[92,-.02,0,8,200],[0,-.02,-92,200,8],[0,-.02,92,200,8]].forEach(([sx,sy,sz,sw,sd])=>{
+  const sb=new THREE.Mesh(new THREE.PlaneGeometry(sw,sd),sandMat);sb.rotation.x=-Math.PI/2;sb.position.set(sx,sy,sz);S.add(sb);
+});
+// Water player boundary (hard stop before water)
+// (handled via PLR.position clamp - already -90 to 90)
+// -- Inner river (decorative) --
+const rv=new THREE.Mesh(new THREE.PlaneGeometry(11,170),new THREE.MeshStandardMaterial({color:0x336699,roughness:.04,metalness:.22,transparent:true,opacity:.84}));
+rv.rotation.x=-Math.PI/2;rv.position.set(-62,-.03,0);S.add(rv);
+box(4,1.4,170,0x9a8060,-57.5,.7,0);// bank
+// River bridge
+box(8,.5,4,0xb8a888,-62,0,0);cyl(.2,.2,1.5,6,0xaa9977,-65,0.75,0);cyl(.2,.2,1.5,6,0xaa9977,-59,0.75,0);
+
+// -- Street lamps --
+[[-4.5,5.5],[-4.5,-5.5],[4.5,5.5],[4.5,-5.5],[-4.5,14],[4.5,14],[-4.5,-14],[4.5,-14],[14,5.5],[14,-5.5],[-24,5.5],[-24,-5.5],[14,30]].forEach(([lx,lz])=>{
+  cyl(.09,.09,5.2,6,0x888888,lx,2.6,lz);
+  box(.7,.35,.7,0x555555,lx,5.4,lz);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(.21,8,8),new THREE.MeshStandardMaterial({color:0xffffcc,emissive:0xffffaa,emissiveIntensity:.9}));
+  bulb.position.set(lx,5.1,lz);S.add(bulb);
+  const ptl=new THREE.PointLight(0xffeeaa,.7,11);ptl.position.set(lx,5.1,lz);S.add(ptl);
+});
+
+// -- Trees --
+[[-14,-34],[14,-34],[-6,-42],[6,-42],[40,-8],[40,-26],[-54,6],[-54,-6],[6,46],[-6,46],[28,-46],[58,-22],[58,12],[-28,30],[32,30],[-42,-42],[22,46]].forEach(([tx,tz])=>{
+  cyl(.3,.38,3.5,8,0x7a5030,tx,1.75,tz);
+  cyl(3,.6,3.2,10,0x26702a,tx,4.6,tz);cyl(2.4,.3,2.2,10,0x347a30,tx,5.9,tz);cyl(1.8,.1,1.8,8,0x3c8038,tx,6.9,tz);
+});
+// Bushes (larger variety)
+[[6,-28],[12,-28],[-5,-28],[10,-8],[-10,-8],[20,8],[-20,8],[8,32],
+ [18,-30],[-15,18],[22,35],[-8,42],[35,18],[-30,22],[12,-15]].forEach(([bx,bz])=>{
+  sph(1.3,0x2a8a2a,bx,1.1,bz,.9);sph(.95,0x357535,bx+.8,1.15,bz-.6,.9);
+  sph(.7,0x2d7a2d,bx-.6,1.0,bz+.5,.9);
+});
+// Tall grass clumps (thin vertical boxes)
+const grassPts=[
+  [3,-20],[7,-22],[-3,-22],[15,-12],[-12,12],[8,15],[-6,18],[20,-8],
+  [-18,-10],[25,5],[-25,-8],[18,28],[-8,-35],[35,-15],[-35,20],[12,-42],
+  [22,-38],[-22,35],[8,-48],[-8,48]
+];
+grassPts.forEach(([gx,gz])=>{
+  const h=0.6+Math.random()*.8;const col=Math.random()<.5?0x4a8a30:0x3a7a28;
+  // Grass blade cluster: 5-7 thin boxes at slight angles
+  for(let k=0;k<5;k++){
+    const ox=(Math.random()-.5)*.6,oz=(Math.random()-.5)*.6;
+    const angle=(Math.random()-.5)*.4;
+    box(.06,h,.06,col,gx+ox,h/2,gz+oz,angle);
+  }
+});
+// Low wildflowers - tiny colored spheres on stems
+const flowerPts=[
+  [4,-26],[-4,-26],[14,-10],[-14,-10],[6,20],[-6,20],[22,12],[-22,12],
+  [30,-10],[-30,10],[16,35],[-16,35],[8,-50],[40,5]
+];
+const flowerColors=[0xff6644,0xffaa00,0xff88cc,0xffeeaa,0xcc88ff,0x88ddff];
+flowerPts.forEach(([fx,fz])=>{
+  box(.04,.4,.04,0x559933,fx,.2,fz);// stem
+  sph(.12,flowerColors[Math.floor(Math.random()*flowerColors.length)],fx,.52,fz,.7);
+});
+// Rock clusters for natural feel
+[[-18,-30],[25,-22],[-32,15],[42,-8],[-8,52],[18,-52]].forEach(([rx,rz])=>{
+  sph(0.5+Math.random()*.4,0x888880,rx,.3,rz,.95);
+  sph(0.3+Math.random()*.3,0x999990,rx+.6,.2,rz+.4,.95);
+  sph(0.2+Math.random()*.2,0x777770,rx-.3,.15,rz-.3,.95);
+});
+// -- Fences --
+for(let i=-6;i<6;i++){box(.1,1,.1,0xaa8844,i*.8-4,.5,-44);box(3.3,.08,.1,0xaa8844,-4+i*.3,.9,-44);}
+
+// ============================================================
+// NPC SYSTEM
+// ============================================================
+// OUTDOOR NPCs only (unique, stay in their spots, don't roam indoors)
+const NPCDEFS=[
+  // === KEY STORY NPCs (fixed positions, don't wander far) ===
+  {id:'uncle',n:'叔叔达拉',e:'👨‍🦱',role:'uncle',x:4,z:-30,col:0xc0a855,bx:4,bz:-30,wRange:2,
+   lines:['阿南，你来了！','记住做事要小心。','这个行业，懂得保护自己。'],
+   story:{first:'阿南！等你很久了。来，叔叔带你见识这个行业...',teach1:'好，纸张和墨水的配比是关键...',teach2:'你进步很快！现在教你防伪技术仿制方法。',gang:'是时候招募人手保护自己了。我认识几个可靠的人...'}},
+  {id:'bm',n:'黑市商人博里',e:'🕵️',role:'black_market',x:2,z:14,col:0x445566,bx:2,bz:14,wRange:2,
+   lines:['...','你要什么？','快点，别让人看见。'],
+   story:{first:'哦，达拉的侄子？我这里有安全线、变色墨水，价格不便宜。'}},
+  {id:'police',n:'警察队长阿努',e:'👮',role:'police',x:8,z:-10,col:0x4169E1,bx:8,bz:-10,wRange:8,
+   lines:['最近有可疑活动，注意。','证件请随时携带。','一旦发现违法，绝不手软！'],
+   story:{first:'你是新面孔？假币案件增多，我正在调查。你有没有见过可疑的人？',warn:'我警告你，我在盯着你！别以为做的事我不知道。'}},
+  {id:'police2',n:'警察钱达',e:'👮‍♂️',role:'police',x:-5,z:-15,col:0x3366cc,bx:-5,bz:-15,wRange:6,
+   lines:['保持秩序！','有问题请找我们。'],
+   story:{first:'你好，市民。最近不要在夜晚独自出行。'}},
+  {id:'wang',n:'工厂主万纳',e:'👔',role:'factory_boss',x:36,z:11,col:0x885533,bx:36,bz:11,wRange:3,
+   lines:['你好！想打工或者买工厂？','我的工厂效益不错。'],
+   story:{first:'你好，我是工厂主万纳。第二工厂刚开业，需要工人，也可出售给买家。'}},
+  {id:'chen',n:'工厂主索卡',e:'🧔',role:'factory_boss',x:36,z:-4,col:0x775533,bx:36,bz:-4,wRange:3,
+   lines:['第一工厂就在那边。','有没有兴趣打工？'],
+   story:{first:'我是工厂主索卡，第一工厂的老板。来打工还是想买下来？'}},
+  {id:'li',n:'仓库主达龙',e:'🤵',role:'warehouse_boss',x:-34,z:30,col:0x445566,bx:-34,bz:30,wRange:4,
+   lines:['仓库工作很简单，就是搬货。','有没有想买下仓库？'],
+   story:{first:'我有四栋仓库，需要工人。工资不高但稳定，也可以卖给你。'}},
+  {id:'trader',n:'市场商人宋帕',e:'👨‍💼',role:'trader',x:6,z:18,col:0xf4a460,bx:6,bz:18,wRange:4,
+   lines:['来看看！新货到了！','材料齐全，价钱公道！'],
+   story:{first:'朋友，第一次来？我这里有纸张墨水，也有特殊货。懂吗？'}},
+  {id:'barkeep',n:'酒吧主雷亚',e:'🍺',role:'barkeep',x:22,z:-18,col:0x553322,bx:22,bz:-18,wRange:3,
+   lines:['要喝点什么？','最近警察盯得很紧。'],
+   story:{first:'新面孔？这里消息最灵通。花钱买情报，少走弯路。'}},
+  // === PASSERSBY (wander freely, unique names) ===
+  {id:'pass1',n:'路人嵩维',e:'🚶',role:'passerby',x:-10,z:5,col:0x88aa66,bx:-10,bz:5,wRange:15,
+   lines:['你好！','天气不错。','这城市越来越热闹了。'],
+   story:{first:'嗯？你在找什么？这附近我很熟悉。'}},
+  {id:'pass2',n:'路人达文',e:'🚶‍♂️',role:'passerby',x:5,z:8,col:0x6688aa,bx:5,bz:8,wRange:18,
+   lines:['嗨！','我赶时间，再见。','今天市场有什么好货？'],
+   story:{first:'Jack这个名字，我爸爸取的。他是外国人。你找我有事？'}},
+  {id:'pass3',n:'路人茜拉',e:'👩',role:'passerby',x:-5,z:25,col:0xddaacc,bx:-5,bz:25,wRange:12,
+   lines:['哎呀！','最近物价好贵哦。','你是新来的吗？'],
+   story:{first:'我在这里住了十年了，什么风吹草动都瞒不过我。'}},
+  {id:'pass4',n:'路人班纳',e:'👴',role:'passerby',x:15,z:-5,col:0xaa9977,bx:15,bz:-5,wRange:14,
+   lines:['唉，老了。','年轻人，加油！','这城市变化真大啊。'],
+   story:{first:'我以前也是商人，后来退休了。你做什么行当的？'}},
+  {id:'pass5',n:'路人明达',e:'🧑',role:'passerby',x:-12,z:-8,col:0x77aadd,bx:-12,bz:-8,wRange:16,
+   lines:['哦！','我要去买东西了。','听说市场今天有打折！'],
+   story:{first:'我叫小明，本地人。你不是本地人吧？这里有什么需要帮忙的？'}},
+];
+// Indoor-only NPC defs (only used in addRoomNPC, NOT in outdoor NPCS array)
+const INDOOR_NPCDEFS={
+  mother:{id:'mother',n:'母亲索碧亚',e:'👩‍🦳',role:'mother',col:0xd4a0c0,
+    lines:['阿南，妈妈头很痛...','你要好好的，阿南。'],
+    story:{first:'孩子，妈妈身体越来越差了。医生说需要$800才能做手术...千万不要为了妈妈做坏事啊。',broke:'钱不够没关系，妈妈撑得住...（咳嗽）',paid:'（眼眶湿润）孩子，谢谢你...妈妈有救了！',rich:'你哪来的这么多钱？妈妈很担心你...'}},
+  worker:{id:'worker',n:'工人阿明达',e:'👷',role:'worker',col:0xffa500,
+    lines:['老板，今天排产多少？','机器需要检修了。'],
+    story:{first:'你就是新来的？工厂没有主人，机器快生锈了。你有没有想买下来？'}},
+  banker:{id:'banker',n:'银行员工黛维',e:'🏦',role:'banker',col:0x7a9acc,
+    lines:['欢迎光临国家银行。','服务完全保密。'],
+    story:{first:'您好！资金来源不必解释太清楚。'}},
+  doctor:{id:'doctor',n:'医院医生蒙医生',e:'👨‍⚕️',role:'doctor',col:0xffffff,
+    lines:['请问有什么不舒服？','手术需要$800，请先缴费。'],
+    story:{first:'你好，李女士的儿子？手术费$800，请尽快缴纳。'}},
+  gangster1:{id:'gangster1',n:'混混波列',e:'😤',role:'gangster',col:0x223322,
+    lines:['你要找人手吗？','保护费我收的。'],
+    story:{first:'老大说你想招人？我加入！每天$30，给你保驾护航。'}},
+  gangster_indoor:{id:'gangster_indoor',n:'混混波列',e:'😤',role:'gangster',col:0x223322,
+    lines:['你要找人手吗？','保护费我收的。'],
+    story:{first:'老大说你想招人？我加入！每天$30，给你保驾护航。'}},
+  barkeep_indoor:{id:'barkeep_indoor',n:'酒吧主雷亚',e:'🍺',role:'barkeep',col:0x553322,
+    lines:['要喝点什么？','消息灵通，花钱买。'],
+    story:{first:'新面孔？这里消息最灵通。花钱买情报，少走弯路。'}},
+  monk:{id:'monk',n:'僧侣·达摩',e:'🧘',role:'monk',col:0xff8844,
+    lines:['施主，请放下心中执念。','每三天方可在此祈祷。','心静自然凉。'],
+    story:{first:'阿弥陀佛。施主，此处是净土。每三天可祈祷一次，可减轻尘世的业障（热度-10，体力-10）。'}},
+  market_keeper:{id:'market_keeper',n:'摊位老板娘莫尼',e:'👩‍🍳',role:'trader',col:0xf4c060,
+    lines:['欢迎光临！','今日特价！','有什么需要？'],
+    story:{first:'你好！我管理这个市场。需要什么材料或食物，直接告诉我！'}},
+  police_indoor:{id:'police_indoor',n:'值班警察维拉克',e:'👮',role:'police',col:0x4169E1,
+    lines:['这里是警察局。','有什么需要帮忙？'],
+    story:{first:'你来警察局有什么事？这里的一切都会记录在案。'}},
+};
+
+function buildNPC(def){
+  const g=new THREE.Group();
+  // Legs
+  const legs=[];[-.15,.15].forEach((lx,i)=>{const lg=box(.23,.75,.23,0x2a3a88,lx,.375,0,0,.8,g);legs.push(lg);});
+  g.userData.legs=legs;
+  // Body
+  box(.55,1.1,.4,def.col,0,1.0,0,0,.8,g);
+  // Arms
+  [-.42,.42].forEach(ax=>box(.22,.78,.22,def.col,ax,.9,0,0,.8,g));
+  // Head
+  box(.52,.54,.5,0xf4c888,0,1.82,0,0,.7,g);
+  // Hair
+  const hairCol=def.role==='police'?0x111155:def.role==='doctor'?0x888888:0x1a1008;
+  box(.54,.2,.52,hairCol,0,2.08,0,0,.9,g);
+  // Eyes
+  [-.13,.13].forEach(ex=>sph(.06,0x111111,ex,1.84,.26,.9,g));
+  // Special accessories
+  if(def.role==='police'){box(.58,.2,.56,0x2233aa,0,2.2,0,0,.7,g);box(.15,.12,.05,0xddaa00,.15,1.15,.22,0,.5,g);}
+  if(def.role==='worker') sph(.32,0xffaa00,0,2.16,0,.7,g);
+  if(def.role==='doctor'){box(.6,.22,.55,0xffffff,0,2.18,0,0,.5,g);box(.08,.6,.06,0xff4444,.05,1.0,.22,0,.5,g);}
+  if(def.role==='gangster'){box(.54,.2,.52,0x111111,0,2.08,0,0,.9,g);}
+  // Label sprite
+  const lbl=new THREE.Sprite(new THREE.SpriteMaterial({map:makeNPCTex(def.e+' '+def.n),transparent:true}));
+  lbl.scale.set(2.6,.56,1);lbl.position.y=2.75;g.add(lbl);
+  g.position.set(def.x,0,def.z);
+  g.userData={...def,wAngle:Math.random()*Math.PI*2,wTimer:0,wSpd:.22+Math.random()*.18,wPhase:0};
+  S.add(g);return g;
+}
+function makeNPCTex(txt){
+  const c2=document.createElement('canvas');c2.width=256;c2.height=56;
+  const ctx=c2.getContext('2d');ctx.fillStyle='rgba(0,0,0,.68)';
+  if(ctx.roundRect)ctx.roundRect(2,6,252,44,8);else ctx.fillRect(2,6,252,44);
+  ctx.fill();ctx.fillStyle='#fff';ctx.font='14px Arial';ctx.textAlign='center';ctx.fillText(txt,128,34);
+  return new THREE.CanvasTexture(c2);
+}
+const NPCS=NPCDEFS.map(buildNPC);
+
+// ============================================================
+// PLAYER
+// ============================================================
+const PLR=new THREE.Group();
+const plrLegs=[];[-.15,.15].forEach((lx,i)=>{const lg=box(.24,.75,.24,0x223388,lx,.375,0,0,.8,PLR);plrLegs.push(lg);});
+box(.54,1.1,.4,0x3366cc,0,1.0,0,0,.75,PLR);
+const plrArms=[];[-.42,.42].forEach(ax=>{const a=box(.22,.78,.22,0x3366cc,ax,.9,0,0,.75,PLR);plrArms.push(a);});
+box(.52,.52,.5,0xf4c888,0,1.82,0,0,.7,PLR);
+box(.54,.2,.52,0x111008,0,2.06,0,0,.9,PLR);
+[-.13,.13].forEach(ex=>sph(.06,0x111111,ex,1.84,.26,.9,PLR));
+PLR.position.copy(G.ppos);S.add(PLR);
+
+// ============================================================
+// INPUT
+// ============================================================
+const K={};
+
+const IS_MOBILE = matchMedia('(hover:none), (pointer:coarse), (max-width:900px)').matches;
+function safePointerLock(el){
+  if(IS_MOBILE) return;
+  try{ if(el && el.requestPointerLock) el.requestPointerLock(); }catch(e){}
+}
+function tapKey(k){
+  if(k==='space') k=' ';
+  initAudio();
+  K[k]=true;
+  const ev=new KeyboardEvent('keydown',{key:k,bubbles:true});
+  document.dispatchEvent(ev);
+  setTimeout(()=>{K[k]=false;document.dispatchEvent(new KeyboardEvent('keyup',{key:k,bubbles:true}));},80);
+}
+function setupMobileControls(){
+  if(!IS_MOBILE) return;
+  document.body.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+  const joy=document.getElementById('joy'), knob=document.getElementById('joyKnob');
+  let joyId=null, cx=0, cy=0;
+  function resetMove(){['w','a','s','d','shift'].forEach(k=>K[k]=false);knob.style.transform='translate(0,0)';}
+  function updateJoy(t){
+    const dx=t.clientX-cx, dy=t.clientY-cy, max=42;
+    const len=Math.hypot(dx,dy)||1, nx=dx/len*Math.min(max,len), ny=dy/len*Math.min(max,len);
+    knob.style.transform=`translate(${nx}px,${ny}px)`;
+    K['w']=ny<-14; K['s']=ny>14; K['a']=nx<-14; K['d']=nx>14; K['shift']=len>52;
+  }
+  joy.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joyId=t.identifier;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;updateJoy(t);},{passive:false});
+  joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyId) updateJoy(t);}},{passive:false});
+  joy.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===joyId){joyId=null;resetMove();}}});
+  joy.addEventListener('touchcancel',()=>{joyId=null;resetMove();});
+
+  document.querySelectorAll('.mbtn').forEach(btn=>{
+    btn.addEventListener('touchstart',e=>{e.preventDefault();tapKey(btn.dataset.key);},{passive:false});
+    btn.addEventListener('click',e=>{e.preventDefault();tapKey(btn.dataset.key);});
+  });
+  document.querySelectorAll('.hs').forEach((el,idx)=>{
+    el.addEventListener('touchstart',e=>{e.preventDefault();G.activeSlot=idx;updateHotbar();},{passive:false});
+  });
+
+  let camId=null,lastX=0,lastY=0;
+  function camMove(t){
+    const dx=t.clientX-lastX, dy=t.clientY-lastY; lastX=t.clientX; lastY=t.clientY;
+    if(G.inRoom){G.iyaw-=dx*.004;G.ipitch=Math.max(-1.2,Math.min(.2,G.ipitch-dy*.004));}
+    else{G.pyaw-=dx*.004;G.ppitch=Math.max(-1.3,Math.min(.2,G.ppitch-dy*.004));}
+  }
+  [cv,ic].forEach(el=>{
+    el.addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(t.clientX>innerWidth*.38){camId=t.identifier;lastX=t.clientX;lastY=t.clientY;initAudio();}}},{passive:false});
+    el.addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===camId){e.preventDefault();camMove(t);}}},{passive:false});
+    el.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===camId)camId=null;}});
+    el.addEventListener('touchcancel',()=>{camId=null;});
+  });
+}
+
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();K[k]=true;
+  if(k===' '){e.preventDefault();
+    if(G.onGnd&&!G.sleeping&&!G.inRoom) doJump();
+    else if(document.getElementById('fgame').style.display==='flex') fgSpacePress();
+  }
+  if(k==='e') doInteract();
+  if(k==='i'&&!G.inRoom) openPanel('inv');
+  if(k==='u') openPanel('skills');
+  if(k==='g'&&!G.inRoom) openPanel('gang');
+  if(k==='m') openMapPanel();
+  if(k==='p'&&!G.inRoom) openPanel('props');
+  if(k==='f'&&!G.sleeping) openFG();
+  if(k==='b') trySleep();
+  if(k==='escape') closeAll();
+  if(['1','2','3','4','5'].includes(k)){G.activeSlot=parseInt(k)-1;updateHotbar();}
+});
+document.addEventListener('keyup',e=>K[e.key.toLowerCase()]=false);
+cv.addEventListener('click',()=>{
+  if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&document.getElementById('dlg').style.display==='none')
+    safePointerLock(cv);
+});
+document.addEventListener('pointerlockchange',()=>{G.plocked=document.pointerLockElement===cv;});
+document.addEventListener('mousemove',e=>{
+  if(G.plocked&&!G.sleeping&&!G.inRoom){G.pyaw-=e.movementX*.002;G.ppitch=Math.max(-1.3,Math.min(.2,G.ppitch-e.movementY*.002));}
+  if(G.ilocked&&G.inRoom){G.iyaw-=e.movementX*.002;G.ipitch=Math.max(-1.2,Math.min(.2,G.ipitch-e.movementY*.002));}
+});
+ic.addEventListener('click',()=>{if(G.inRoom&&document.getElementById('dlg').style.display==='none')safePointerLock(ic);});
+document.addEventListener('pointerlockchange',()=>{G.ilocked=document.pointerLockElement===ic;});
+
+function doJump(){G.pvy=5.8;G.onGnd=false;}
+
+// ============================================================
+// PLAYER MOVEMENT
+// ============================================================
+const fwdV=new THREE.Vector3(),rgV=new THREE.Vector3(),mvV=new THREE.Vector3();
+function updatePlayer(dt){
+  if(G.sleeping||G.inRoom) return;
+  fwdV.set(-Math.sin(G.pyaw),0,-Math.cos(G.pyaw));
+  rgV.set(Math.cos(G.pyaw),0,-Math.sin(G.pyaw));
+  mvV.set(0,0,0);
+  if(K['w']||K['arrowup']) mvV.add(fwdV);
+  if(K['s']||K['arrowdown']) mvV.sub(fwdV);
+  if(K['a']||K['arrowleft']) mvV.sub(rgV);
+  if(K['d']||K['arrowright']) mvV.add(rgV);
+  const moving=mvV.length()>.01;
+  if(moving){
+    mvV.normalize();const sprinting=K['shift']&&G.st>20;const spd=G.st>10?(sprinting?7.5:4.2):1.8;
+    PLR.position.addScaledVector(mvV,spd*dt);
+    PLR.rotation.y=Math.atan2(mvV.x,mvV.z);
+    // no stamina drain from walking
+    G.wc+=dt*9;
+    if(Math.floor(G.wc*2)!==Math.floor((G.wc-dt*9)*2)) playFootstep();
+    plrLegs[0].rotation.x=Math.sin(G.wc)*.45;plrLegs[1].rotation.x=-Math.sin(G.wc)*.45;
+    plrArms[0].rotation.x=-Math.sin(G.wc)*.35;plrArms[1].rotation.x=Math.sin(G.wc)*.35;
+  } else {
+    plrLegs[0].rotation.x*=.8;plrLegs[1].rotation.x*=.8;
+    plrArms[0].rotation.x*=.8;plrArms[1].rotation.x*=.8;
+  }
+  // Gravity & jump
+  G.pvy-=20*dt;PLR.position.y+=G.pvy*dt;
+  if(PLR.position.y<=0){PLR.position.y=0;G.pvy=0;G.onGnd=true;}
+  // World bounds
+  PLR.position.x=Math.max(-90,Math.min(90,PLR.position.x));
+  PLR.position.z=Math.max(-90,Math.min(90,PLR.position.z));
+  // Building collision
+  const px=PLR.position.x,pz=PLR.position.z;
+  const pr=0.4;// player radius
+  BLDS.forEach(b=>{
+    if(!b.bounds||!b.w) return;
+    // Push player out if inside building footprint (with margin for door)
+    const doorGap=1.2;// allow entering through door zone
+    const inX=px>b.bounds.x1+pr&&px<b.bounds.x2-pr;
+    const inZ=pz>b.bounds.z1+pr&&pz<b.bounds.z2-pr;
+    if(!inX||!inZ) return;
+    // Near door (front face, center): allow pass-through
+    const nearDoor=Math.abs(px-b.x)<doorGap&&pz<b.z-b.d/2+1.5;
+    if(nearDoor) return;
+    // Push back to nearest face
+    const dLeft=Math.abs(px-b.bounds.x1),dRight=Math.abs(px-b.bounds.x2);
+    const dFront=Math.abs(pz-b.bounds.z1),dBack=Math.abs(pz-b.bounds.z2);
+    const mn=Math.min(dLeft,dRight,dFront,dBack);
+    if(mn===dLeft) PLR.position.x=b.bounds.x1-pr;
+    else if(mn===dRight) PLR.position.x=b.bounds.x2+pr;
+    else if(mn===dFront) PLR.position.z=b.bounds.z1-pr;
+    else PLR.position.z=b.bounds.z2+pr;
+  });
+  // Tree collision (simple cylinders)
+  [[-14,-34],[14,-34],[-6,-42],[6,-42],[40,-8],[40,-26],[-54,6],[-54,-6],[6,46],[-6,46],[28,-46],[58,-22],[58,12],[-28,30],[-82,20],[-82,-20],[-82,0],[82,10],[82,-10],[10,-82],[-10,-82],[20,82],[-20,82]].forEach(([tx,tz])=>{
+    const d=Math.hypot(PLR.position.x-tx,PLR.position.z-tz);
+    if(d<0.55){const a=Math.atan2(PLR.position.x-tx,PLR.position.z-tz);PLR.position.x=tx+Math.sin(a)*.6;PLR.position.z=tz+Math.cos(a)*.6;}
+  });
+  // NPC collision (push player away)
+  NPCS.forEach(n=>{
+    const d=Math.hypot(PLR.position.x-n.position.x,PLR.position.z-n.position.z);
+    if(d<0.65&&d>0.01){
+      const a=Math.atan2(PLR.position.x-n.position.x,PLR.position.z-n.position.z);
+      PLR.position.x=n.position.x+Math.sin(a)*0.7;
+      PLR.position.z=n.position.z+Math.cos(a)*0.7;
+    }
+  });
+  G.ppos.copy(PLR.position);
+}
+function updateCamera(){
+  const off=new THREE.Vector3(0,2.5,3.4);
+  off.applyEuler(new THREE.Euler(G.ppitch,G.pyaw,0,'YXZ'));
+  CAM.position.copy(PLR.position).add(new THREE.Vector3(0,1.3,0)).add(off);
+  CAM.lookAt(PLR.position.x,PLR.position.y+1.4,PLR.position.z);
+}
+
+// ============================================================
+// NPC WANDER + ANIMATION
+// ============================================================
+function updateNPCs(dt){
+  NPCS.forEach(n=>{
+    n.userData.wTimer+=dt;
+    if(n.userData.wTimer>2.8+Math.random()*2.5){n.userData.wAngle+=(-0.7+Math.random())*Math.PI;n.userData.wTimer=0;}
+    const dx=Math.sin(n.userData.wAngle)*n.userData.wSpd*dt;
+    const dz=Math.cos(n.userData.wAngle)*n.userData.wSpd*dt;
+    const nx=n.position.x+dx,nz=n.position.z+dz;
+    const wR=n.userData.wRange||6;
+    const d2=Math.hypot(nx-n.userData.bx,nz-n.userData.bz);
+    if(d2<wR){
+      n.position.x=nx;n.position.z=nz;n.rotation.y=Math.atan2(dx,dz);
+      n.userData.wPhase+=dt*5;
+      if(n.userData.legs){n.userData.legs[0].rotation.x=Math.sin(n.userData.wPhase)*.35;n.userData.legs[1].rotation.x=-Math.sin(n.userData.wPhase)*.35;}
+    } else {n.userData.wAngle+=Math.PI;}
+    // Police follow player if heat > 70
+    if(n.userData.role==='police'&&G.heat>70){
+      const toP=new THREE.Vector3(G.ppos.x-n.position.x,0,G.ppos.z-n.position.z);
+      const dist=toP.length();
+      if(dist>5&&dist<30){toP.normalize();n.position.addScaledVector(toP,.6*dt);n.rotation.y=Math.atan2(toP.x,toP.z);}
+    }
+  });
+}
+
+// ============================================================
+// PROXIMITY CHECK
+// ============================================================
+function checkProx(){
+  G.nearB=null;G.nearNPC=null;
+  const px=G.ppos.x,pz=G.ppos.z;
+  BLDS.forEach(b=>{if(!b.w) return;const d=Math.hypot(b.x-px,b.z-pz);if(d<7) G.nearB=b;});
+  NPCS.forEach(n=>{const d=Math.hypot(n.position.x-px,n.position.z-pz);if(d<3.8) G.nearNPC=n;});
+  const hw=document.getElementById('ihintw');
+  if(G.nearNPC){hw.textContent='[ E ] 与 '+G.nearNPC.userData.n+' 对话';hw.style.display='block';}
+  else if(G.nearB){hw.textContent='[ E ] 进入 '+G.nearB.n;hw.style.display='block';}
+  else hw.style.display='none';
+}
+
+// ============================================================
+// INTERIOR SYSTEM
+// ============================================================
+function mib(w,h,d,c,x,y,z){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,roughness:.85}));
+  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;IS.add(m);return m;
+}
+function mic(rt,rb,h,seg,c,x,y,z){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),new THREE.MeshStandardMaterial({color:c}));m.position.set(x,y,z);IS.add(m);return m;}
+function addIItem(mesh,label,hint,action){G.iItems.push({mesh,label,hint,action});}
+
+function buildInterior(type){
+  while(IS.children.length) IS.remove(IS.children[0]);
+  G.iItems=[];
+  IR.setSize(innerWidth,innerHeight);ICAM.aspect=innerWidth/innerHeight;ICAM.updateProjectionMatrix();
+  IS.fog=new THREE.Fog(0x1a120a,.5,28);
+  IS.add(new THREE.AmbientLight(0xfff0e0,.5));
+  const ml=new THREE.PointLight(0xfff8e0,1.1,20);ml.position.set(0,4.5,0);IS.add(ml);
+  // Walls/floor/ceiling shell
+  const fcolors={home:0xd4b896,factory:0x666655,market:0xe0c870,bank:0xc8c0a0,warehouse:0x777777,police:0x556688,temple:0xc8b890,hospital:0xf0f0f0,bar:0x1a0a05};
+  const wcolors={home:0xf0e8d8,factory:0x888878,market:0xf5e0a0,bank:0xf0ead0,warehouse:0x8888a0,police:0x4466aa,temple:0xd0c090,hospital:0xffffff,bar:0x1a0a08};
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshStandardMaterial({color:fcolors[type]||0xc8b890,roughness:.92}));
+  fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;IS.add(fl);
+  const wm=new THREE.MeshStandardMaterial({color:wcolors[type]||0xf0e0d0,roughness:.9,side:THREE.BackSide});
+  const walls=new THREE.Mesh(new THREE.BoxGeometry(14,5.5,14),wm);walls.position.y=2.75;IS.add(walls);
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshStandardMaterial({color:0xeeeedd,roughness:.95}));
+  ceil.rotation.x=Math.PI/2;ceil.position.y=5.5;IS.add(ceil);
+  IS.background=new THREE.Color(wcolors[type]||0x1a1008);
+
+  if(type==='home'){
+    IS.fog.color.set(0x1a1008);ml.color.set(0xffe8cc);ml.intensity=.9;
+    // Bed
+    const bed=mib(2.8,.55,1.6,0x334488,-1,.28,-4.5);
+    mib(2.8,.5,1.6,0x6677cc,-1,.56,-4.5);mib(2.8,.6,.25,0x223377,-1,.75,-5.25);mib(1.2,.25,1.4,0xeeeedd,-1,.55,-4);
+    addIItem(bed,'床','B - 睡觉恢复体力','sleep');
+    // Workbench/Forge
+    const wb=mib(2.2,1,.9,0x8B7040,3.5,.5,-4);mib(2.2,.08,.9,0x222222,3.5,1.06,-4);
+    mib(1.5,.7,.55,0x333355,3.5,.62,-4);mib(.5,.3,.3,0x111122,4.2,.96,-3.65);
+    mib(.22,.04,1.5,0x888888,3.5,1.07,-4.2);// paper tray
+    addIItem(wb,'制作台','E/F - 开始制作假币','forge');
+    // Bookshelf
+    mib(1.6,3.5,.3,0x9a7040,5.5,1.75,-5.5);
+    [1,2,3].forEach(sh=>{mib(1.6,.08,.28,0x7a6030,5.5,sh,-5.5);[0,.5,1].forEach((_,bi)=>mib(.28,.38,.22,[0x224488,0x882244,0x228844][bi],5.22+bi*.38,sh+.25,-5.5));});
+    // Sofa + table
+    mib(3,.6,1.2,0x664422,-2.5,.3,3);mib(3,.8,.25,0x664422,-2.5,.7,3.65);mib(.7,.55,.9,0x664422,-4.05,.5,3);mib(.7,.55,.9,0x664422,-1,.5,3);
+    mib(1.2,.5,1.2,0x9a8060,-1.5,.25,2.5);// coffee table
+    // TV
+    mib(2,.1,1.4,0x111111,0,3.2,-5.88);mib(2.2,.3,.08,0x222222,0,2.6,-5.88);
+    // Carpet
+    const carp=new THREE.Mesh(new THREE.PlaneGeometry(4,3),new THREE.MeshStandardMaterial({color:0xaa3322,roughness:.98}));
+    carp.rotation.x=-Math.PI/2;carp.position.set(-2,.015,1);IS.add(carp);
+    // Window light
+    const wl=new THREE.SpotLight(0xfff0cc,.8,12,.4);wl.position.set(-5,5,-3);wl.target.position.set(0,0,0);IS.add(wl);IS.add(wl.target);
+    // Storage chest
+    const chest=mib(1.4,.8,1,0x8B6030,-3.5,.4,-5);
+    mib(1.4,.1,1,0x6B4010,-3.5,.81,-5);// lid
+    mib(.15,.6,.8,0xddaa44,-3.5,.5,-4.52);// lock hasp
+    mib(.2,.2,.2,0xddbb22,-3.5,.5,-4.48);// padlock
+    addIItem(chest,'储物箱','E - 打开储物箱','storage');
+  }
+  else if(type==='factory'){
+    IS.fog.color.set(0x101510);IS.background.set(0x0d1008);ml.intensity=.7;
+    // Printing press
+    const press=mib(3,2,2,0x333355,-3,1,-2);mib(3,.12,2,0x222233,-3,2.06,-2);
+    mib(1,.8,1.5,0x444466,-3,2.66,-2);mib(.3,.3,.3,0xee4444,-2.4,2.82,-1.5);mib(.3,.3,.3,0x44ee44,-3,2.82,-1.5);
+    addIItem(press,'印刷机','E/F - 使用机器制作','forge');
+  // Work sign at factory
+  const workSign=mib(1.5,.5,0.3,0x226644,4,2.5,-5);addIItem(workSign,'工厂工作台','E - 在工厂打工','work_'+(G.curRoom?.id||'factory'));
+  addRoomNPC('worker',3,0,1,'👷');
+    // Conveyor belt
+    mib(7,.22,1,0x555550,1.5,.11,2);for(let ci=-3;ci<=3;ci++)mic(.12,.12,1.1,6,0x888888,1.5+ci,.68,2);
+    // Shelving
+    [-5.5,-4].forEach(sx=>{mib(.2,5,8,0x6a5030,sx,2.5,0);[.8,1.8,2.8,3.8].forEach(sh=>mib(3,.13,1,0x9B8050,sx+.1,sh,0));});
+    // Crates
+    [[3.5,.4,-3],[3.5,.4,-1],[3.5,.4,1]].forEach(([bx,by,bz])=>mib(.8,.8,.8,0x8B7040,bx,by,bz));
+    // Industrial lights
+    [[0,5.3,-3],[3,5.3,1],[-2,5.3,2]].forEach(([lx,ly,lz])=>{mib(.5,.15,.5,0x333333,lx,ly,lz);const pl=new THREE.PointLight(0xfff0cc,.9,9);pl.position.set(lx,ly-.3,lz);IS.add(pl);});
+    // Auto-produce indicator
+    if(G.skills.autoPress&&G.ownedBlds.includes('factory')){
+      const autol=new THREE.PointLight(0x00ff44,.8,5);autol.position.set(-3,2,0);IS.add(autol);
+      const aul=mib(.3,.3,.3,0x00ff44,-3.5,2.3,-.5);
+      addIItem(aul,'自动化系统','E - 切换自动生产','toggle_auto');
+    }
+    addRoomNPC('worker',3,0,2,'👷');
+  }
+  else if(type==='market'){
+    IS.background.set(0x1a1205);IS.fog.color.set(0x1a1205);ml.color.set(0xffee88);ml.intensity=1.2;
+    [[-4.5,0,-3.5],[0,0,-3.5],[4.5,0,-3.5],[-4.5,0,1],[4.5,0,1]].forEach(([sx,sy,sz],i)=>{
+      const cats=['materials','food','tools','clothing','tools'];
+      const labels=['📄 材料','🍜 食物','🔧 工具','👕 服装','🔒 特殊'];
+      const stall=mib(3,.85,1.5,0xd4a060,sx,.42,sz);mib(3.2,.12,1.6,i%2?0xff6622:0xcc4411,sx,.9,sz);
+      [0x44aa44,0x4444cc,0xccaa44].forEach((c,j)=>mib(.35,.45,.3,c,sx-.4+j*.4,.7,sz-.5));
+      addIItem(stall,labels[i],'E - 查看商品','shop_'+cats[i]);
+    });
+    // Lanterns
+    [[0,4.8,0],[-3.5,4.5,0],[3.5,4.5,0]].forEach(([lx,ly,lz])=>{
+      mic(.22,.26,.55,8,0xff5500,lx,ly,lz);const pl=new THREE.PointLight(0xff8800,.7,6);pl.position.set(lx,ly-.3,lz);IS.add(pl);
+    });
+    // Sell counter
+    const sellC=mib(2.5,.8,1.2,0x554433,0,.4,3.5);addIItem(sellC,'销赃柜台','E - 出售赃品','sell');
+  const errandDesk=mib(1.5,.7,1,0x887744,-4.5,.35,3);addIItem(errandDesk,'跑腿任务台','E - 接取跑腿任务','take_errand');
+    // trader and bm are outdoor NPCs - not duplicated indoors
+    addRoomNPC('market_keeper',0,0,-1,'👩‍🍳');
+  }
+  else if(type==='bank'){
+    IS.background.set(0x080c16);IS.fog.color.set(0x080c16);ml.color.set(0xeef0ff);
+    mib(5,.9,.5,0xd4c8a0,0,.45,-5.5);mib(5,.35,.4,0xc4b890,0,1,-5.25);
+    const vault=mib(2.5,3.5,.15,0x445588,-4.5,1.75,-6);mib(2.3,3.3,.08,0x556699,-4.5,1.75,-5.95);mic(.6,.6,.1,8,0xddcc44,-4.5,1.85,-5.88);
+    addIItem(vault,'银行保险库','E - 金融服务','bank');
+    [[2.5,.5,1],[2.5,.5,2.5],[-1,.5,1]].forEach(([cx,cy,cz])=>{mib(.7,.7,.7,0x334466,cx,cy,cz);mib(.7,.6,.1,0x334466,cx,.7,cz-.4);});
+    mib(1.5,.6,1,0xd4c8a0,2,.3,2);
+    addRoomNPC('banker',0,0,-4,'🏦');
+  }
+  else if(type==='hospital'){
+    IS.background.set(0xeeeeff);IS.fog.color.set(0xeeeeff);
+    ml.color.set(0xffffff);ml.intensity=1.2;
+    // Bed with patient
+    const hbed=mib(2.2,.45,1,0xffffff,-3,.23,-3);mib(2.2,.4,1,0xaaeebb,-3,.46,-3);
+    addIItem(hbed,'病床','E - 支付医药费$800','pay_medical');
+    // Medical equipment
+    mib(.4,1.5,.4,0xdddddd,2,.75,-3);// IV stand
+    mic(.08,.08,1.5,6,0x888888,2.2,1.5,-3);
+    mib(1,.8,.6,0x55aadd,-4.5,.4,-3.5);// medical machine
+    const pl2=new THREE.PointLight(0xffffff,1,15);pl2.position.set(0,5.4,0);IS.add(pl2);
+    addRoomNPC('doctor',-1,0,0,'👨‍⚕️');addRoomNPC('mother',-3,0,-3,'👩‍🦳');
+  }
+  else if(type==='warehouse'){
+    IS.background.set(0x08101a);IS.fog.color.set(0x08101a);ml.intensity=.6;
+    for(let row=-1;row<=1;row++){
+      mib(.18,5,9,0x6a5030,-4.5+row*3.2,2.5,0);
+      [.8,1.8,2.8,3.8,4.8].forEach(sh=>mib(3,.14,1,0x9B8050,-4.5+row*3.2,sh,0));
+      for(let i=0;i<5;i++) mib(.5+Math.random()*.3,.4,.4,0x7a6030,-4.9+Math.random()*.8,.4+Math.floor(Math.random()*5),-4+Math.random()*8);
+    }
+    const cargo=mib(2,.9,2,0x4455aa,3.5,.45,-1);
+    addIItem(cargo,'货物区','E - 查看库存','inventory');
+  const wworkSign=mib(1,.4,.2,0x226644,4.5,1.5,2);addIItem(wworkSign,'仓库工作台','E - 在仓库打工','work_'+(G.curRoom?.id||'wh1'));
+  addRoomNPC('worker',2,0,1,'👷');
+    // if owned, show production panel
+    if(G.ownedBlds.includes('wh1')||G.ownedBlds.includes('wh2')){
+      const ctrl=mib(1.2,1.5,.3,0x335588,4.5,.75,2);
+      addIItem(ctrl,'仓库控制面板','E - 管理仓库','warehouse_ctrl');
+    }
+  }
+  else if(type==='police'){
+    IS.background.set(0x080c18);IS.fog.color.set(0x080c18);ml.color.set(0xeef0ff);
+    mib(5,.9,.4,0x334466,0,.45,-5.5);mib(1.5,2.5,.15,0x3355aa,4,1.25,-6.5);mib(1.3,2,.12,0x222244,4,1.3,-6.4);
+    // Wanted board with photos
+    const wb2=mib(2.5,3,.15,0x334466,-4.5,1.5,-6);
+    mib(.8,1,.05,0xddbb44,-4.6,1.8,-5.9);// wanted poster
+    addIItem(wb2,'通缉公告栏','E - 查看通缉信息','wanted_board');
+    addRoomNPC('police_indoor',0,0,-3,'👮');
+  }
+  else if(type==='bar'){
+    IS.background.set(0x050205);IS.fog.color.set(0x050205);ml.color.set(0xff6688);ml.intensity=.5;
+    IS.add(new THREE.AmbientLight(0x220011,.4));
+    // Bar counter
+    mib(7,.8,1.2,0x2a1208,0,.4,-5);mib(7,.05,1.3,0x3a2210,0,.83,-5);
+    // Bottles
+    for(let i=0;i<8;i++){const bc=mib(.15,.6,.15,[0x4444ff,0xaa4400,0x006644,0x883300][i%4],i*.6-2.1,1.4,-5.55);}
+    // Bar stools
+    for(let i=0;i<5;i++) mic(.2,.2,.6,8,0x4a3020,-2+i*.9,.3,-3.8);
+    // Pool table
+    mib(3,.4,2,0x225522,2,.2,2);mib(3.1,.05,2.1,0x006600,2,.42,2);
+    const infoDesk=mib(1.5,.8,1,0x3a2010,4,.4,3.5);
+    addIItem(infoDesk,'情报柜台','E - 购买情报$50','buy_intel');
+    // Neon lights
+    [[0,4.5,0],[-3,4,0],[3,4,0]].forEach(([lx,ly,lz])=>{const pl=new THREE.PointLight(0xff0088,.6,5);pl.position.set(lx,ly,lz);IS.add(pl);});
+    addRoomNPC('gangster_indoor',-2,0,1,'😤');addRoomNPC('barkeep_indoor',0,0,-4,'🍺');
+  }
+  else if(type==='temple'){
+    IS.background=new THREE.Color(0x0a0608);
+    IS.fog=new THREE.Fog(0x0a0608,.2,22);
+    IS.add(new THREE.AmbientLight(0xff8844,.3));
+    const ceilL=new THREE.PointLight(0xffaa44,.6,18);ceilL.position.set(0,5,0);IS.add(ceilL);
+    mib(16,.2,20,0xc0a870,0,.1,0);
+    mib(16,7,.3,0xd4b880,0,3.5,-9.8);
+    mib(.3,7,20,0xd0b478,-7.85,3.5,0);mib(.3,7,20,0xd0b478,7.85,3.5,0);
+    mib(16,.3,20,0x8B6030,0,7.15,0);
+    [-6,-2,2,6].forEach(bx=>{mib(.4,.5,20,0x7a5020,bx,6.85,0);});
+    mib(4,.6,4,0xc8a870,0,.3,0);mib(3.5,.1,3.5,0xddb880,0,.65,0);
+    const budBase=mib(1.2,2.4,1.2,0xd4a830,0,1.8,-.5);
+    const budH=new THREE.Mesh(new THREE.SphereGeometry(.85,12,10),new THREE.MeshStandardMaterial({color:0xd4a830,metalness:.45,roughness:.4}));
+    budH.position.set(0,4.05,-.5);IS.add(budH);
+    mib(.5,.45,.5,0xd4a820,0,4.95,-.5);
+    addIItem(budBase,'佛祖像','E - 祈祷 (每3天一次，热度-10体力-10)','pray');
+    [[-3.2,0,-2],[3.2,0,-2]].forEach(([sx,sy,sz])=>{mib(.7,1.8,.7,0xc8b060,sx,1.2,sz);const sh=new THREE.Mesh(new THREE.SphereGeometry(.45,8,8),new THREE.MeshStandardMaterial({color:0xc8b060,metalness:.3}));sh.position.set(sx,2.55,sz);IS.add(sh);});
+    [[-1.5,0,.5],[1.5,0,.5]].forEach(([ux,uy,uz])=>{mic(.4,.5,.8,10,0x887744,ux,.4,uz);mic(.3,.3,.3,8,0x998855,ux,.9,uz);for(let k=0;k<3;k++){mic(.03,.03,.7,4,0xddccaa,ux+(k-.5)*.15,1.25,uz);}const fl=new THREE.PointLight(0xff7722,.7,3.5);fl.position.set(ux,1.8,uz);IS.add(fl);});
+    [[-5,-3],[5,-3],[-5,0],[5,0],[-5,3],[5,3]].forEach(([cx,cz])=>{mic(.08,.08,.5,5,0xffffcc,cx,.1,cz);const fl2=new THREE.PointLight(0xff9944,.4,2.5);fl2.position.set(cx,.7,cz);IS.add(fl2);});
+    [[-5.5,-6],[-5.5,2],[5.5,-6],[5.5,2]].forEach(([px,pz])=>{mic(.5,.5,7,10,0xc8b870,px,3.5,pz);mib(1.2,.3,1.2,0xbba860,px,.15,pz);mib(1.2,.25,1.2,0xbba860,px,7,pz);});
+    mib(3,.7,1.2,0x8B6030,0,.35,2.5);mib(3,.06,1.3,0xaa8044,0,.73,2.5);
+    [[-.8,0],[0,0],[.8,0]].forEach(([ox,oz])=>mib(.35,.35,.35,0xff8844,.35+ox,.9,2.5+oz));
+    [-6,-2,2,6].forEach(wx=>{mib(1.2,2.5,.1,0xbba055,wx,3,-9.75);});
+    mib(5,.05,2,0x884422,0,.21,3.5);
+    addRoomNPC('monk',-4,0,-3,'🧘');
+    mic(.5,.4,.6,8,0xcc9922,4,4.5,-8);const bellL=new THREE.PointLight(0xffcc44,.5,4);bellL.position.set(4,4,-8);IS.add(bellL);
+  }
+  // Exit door (interactive)
+  const exitDoor=new THREE.Group();
+  // Door frame
+  const dframe=new THREE.Mesh(new THREE.BoxGeometry(2.2,3.5,.15),new THREE.MeshStandardMaterial({color:0x6a4a2a,roughness:.8}));
+  dframe.position.set(0,1.75,5.9);exitDoor.add(dframe);
+  // Door panel
+  const dpanel=new THREE.Mesh(new THREE.BoxGeometry(1.8,3,.12),new THREE.MeshStandardMaterial({color:0x8B6030,roughness:.7}));
+  dpanel.position.set(0,1.75,5.88);exitDoor.add(dpanel);
+  // Door handle
+  const dhandle=new THREE.Mesh(new THREE.SphereGeometry(.1,8,8),new THREE.MeshStandardMaterial({color:0xddbb44,metalness:.6,roughness:.3}));
+  dhandle.position.set(.55,1.5,5.82);exitDoor.add(dhandle);
+  // Exit sign above door
+  const signGeo=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.45),new THREE.MeshBasicMaterial({color:0x00aa44}));
+  signGeo.position.set(0,3.6,5.85);exitDoor.add(signGeo);
+  IS.add(exitDoor);
+  G.iItems.push({mesh:dframe,label:'出口',hint:'E - 离开建筑',action:'exit_building'});
+}
+
+function addRoomNPC(role,x,y,z,emoji){
+  const def=INDOOR_NPCDEFS[role]||NPCDEFS.find(d=>d.id===role);if(!def) return;
+  const g=new THREE.Group();
+  box(.52,1.1,.4,def.col,0,1.0,0,0,.8,g);box(.52,.52,.5,0xf4c888,0,1.82,0,0,.7,g);
+  [-.15,.15].forEach(lx=>box(.23,.75,.23,0x2a3a88,lx,.375,0,0,.8,g));
+  // Label
+  const lbl=new THREE.Sprite(new THREE.SpriteMaterial({map:makeNPCTex(emoji+' '+def.n),transparent:true}));
+  lbl.scale.set(2.4,.52,1);lbl.position.y=2.6;g.add(lbl);
+  g.position.set(x,y,z);IS.add(g);
+  G.iItems.push({mesh:g,label:def.n,hint:'E - 与 '+def.n+' 对话',action:'npc_'+role,npcId:role});
+}
+
+function enterBuilding(bld){
+  buildInterior(bld.int);
+  G.inRoom=true;G.curRoom=bld;
+  document.getElementById('interior').style.display='block';
+  document.getElementById('rtitle').textContent=bld.n;
+  document.getElementById('ihint').style.display='none';
+  if(G.plocked) document.exitPointerLock();
+  G.iyaw=Math.PI;G.ipitch=0;G.ipx=0;G.ipz=4.5;
+  ICAM.position.set(0,1.6,4.5);ICAM.rotation.set(G.ipitch,G.iyaw,0,'YXZ');
+  ICLK.getDelta();if(!iAnim) iLoop();
+}
+document.getElementById('exitbtn').onclick=()=>exitBuilding();
+function exitBuilding(){
+  G.inRoom=false;G.curRoom=null;G.nearIItem=null;
+  document.getElementById('interior').style.display='none';
+  document.getElementById('ihint').style.display='none';
+  if(iAnim){cancelAnimationFrame(iAnim);iAnim=null;}
+  IS.children.slice().forEach(c=>IS.remove(c));
+  // Release interior pointer lock then immediately re-lock main canvas
+  // so camera control resumes without requiring a click
+  if(G.ilocked){
+    document.exitPointerLock();
+    // Small delay lets the browser process the exit before re-requesting
+    setTimeout(()=>{
+      if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&
+         document.getElementById('dlg').style.display==='none'){
+        safePointerLock(cv);
+      }
+    },80);
+  } else {
+    // Even if not locked, try to re-acquire
+    setTimeout(()=>{
+      if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&
+         document.getElementById('dlg').style.display==='none'){
+        safePointerLock(cv);
+      }
+    },80);
+  }
+}
+
+function iLoop(){
+  iAnim=requestAnimationFrame(iLoop);
+  const dt=Math.min(ICLK.getDelta(),.05);
+  const ifwd=new THREE.Vector3(-Math.sin(G.iyaw),0,-Math.cos(G.iyaw));
+  const irg=new THREE.Vector3(Math.cos(G.iyaw),0,-Math.sin(G.iyaw));
+  const imv=new THREE.Vector3();
+  if(K['w']) imv.add(ifwd);if(K['s']) imv.sub(ifwd);if(K['a']) imv.sub(irg);if(K['d']) imv.add(irg);
+  if(imv.length()>.01){imv.normalize();G.ipx+=imv.x*3*dt;G.ipz+=imv.z*3*dt;}
+  G.ipx=Math.max(-5.8,Math.min(5.8,G.ipx));G.ipz=Math.max(-5.5,Math.min(5.8,G.ipz));
+  ICAM.position.set(G.ipx,1.65,G.ipz);
+  ICAM.rotation.set(G.ipitch,G.iyaw,0,'YXZ');
+  G.nearIItem=null;let closest=2.8;
+  G.iItems.forEach(it=>{const d=Math.hypot(it.mesh.position.x-G.ipx,it.mesh.position.z-G.ipz);if(d<closest){closest=d;G.nearIItem=it;}});
+  const ih=document.getElementById('ihint');
+  if(G.nearIItem){ih.textContent='[ E ] '+G.nearIItem.hint;ih.style.display='block';}else ih.style.display='none';
+  IR.render(IS,ICAM);
+}
+
+function doInteract(){
+  if(G.sleeping) return;
+  // If any overlay is open, E closes it first
+  const dlgOpen=document.getElementById('dlg').style.display!=='none'&&document.getElementById('dlg').style.display!=='';
+  const panelOpen=document.getElementById('panel').style.display==='block';
+  if(dlgOpen){closeDlg();return;}
+  if(panelOpen){closeAll();return;}
+  // Interior interactions
+  if(G.inRoom&&G.nearIItem){handleIAction(G.nearIItem.action,G.nearIItem);return;}
+  // Outdoor interactions
+  if(G.nearNPC){
+    if(errandCarrying&&tryDeliverErrand(G.nearNPC.userData.id)) return;
+    startDlg(G.nearNPC);return;
+  }
+  if(G.nearB){enterBuilding(G.nearB);return;}
+}
+
+function handleIAction(action,item){
+  if(action==='exit_building'){exitBuilding();return;}
+  if(action==='sleep') trySleep();
+  else if(action==='forge') openFG();
+  else if(action.startsWith('shop_')){exitBuilding();openShop(action.split('_')[1]);}
+  else if(action==='sell'){exitBuilding();openSellPanel();}
+  else if(action==='bank'){exitBuilding();openBankPanel();}
+  else if(action==='inventory'){exitBuilding();openPanel('inv');}
+  else if(action==='warehouse_ctrl'){exitBuilding();openPanel('warehouse');}
+  else if(action.startsWith('work_')){const bid=action.replace('work_','');const wb=BLDS.find(b=>b.id===bid);if(wb){exitBuilding();openWorkPanel(wb);}}
+  else if(action==='storage'){exitBuilding();openStoragePanel();}
+  else if(action==='pay_medical') payMedical();
+  else if(action==='buy_intel') buyIntel();
+  else if(action==='take_errand'){exitBuilding();startErrand();}
+  else if(action==='pray') pray();
+  else if(action==='toggle_auto') toggleAuto();
+  else if(action==='wanted_board') showWantedBoard();
+  else if(action.startsWith('npc_')){
+    const npcId=action.replace('npc_','');
+    if(errandCarrying&&tryDeliverErrand(npcId)) return;
+    // Check outdoor NPCs first, then indoor defs, then outdoor defs
+    const npcMesh=NPCS.find(n=>n.userData.id===npcId);
+    if(npcMesh){startDlg(npcMesh);return;}
+    const indoorDef=INDOOR_NPCDEFS[npcId];
+    if(indoorDef){startDlg({userData:indoorDef});return;}
+    const outdoorDef=NPCDEFS.find(d=>d.id===npcId);
+    if(outdoorDef){startDlg({userData:outdoorDef});return;}
+    // Fallback: use the item label as name for unknown NPCs
+    if(item&&item.label){startDlg({userData:{n:item.label,e:'👤',role:'passerby',lines:['你好。'],story:{first:'你好。'}}});return;}
+  }
+}
+function pray(){
+  if(G.day-G.lastPrayDay<3){
+    const wait=3-(G.day-G.lastPrayDay);
+    notify('🙏 每三天才能祈祷一次，还需等待'+wait+'天','w');return;
+  }
+  G.heat=Math.max(0,G.heat-10);
+  G.st=Math.max(0,G.st-10);
+  G.lastPrayDay=G.day;
+  notify('🙏 祈祷完毕，内心平静。热度-10，体力-10','i');completeQuest('q11');
+  playTone(220,1.5,'sine',0.06);setTimeout(()=>playTone(277,1.2,'sine',0.04),300);
+  updateHUD();
+}
+function payMedical(){
+  if(G.money<800){notify('医药费需要$800，目前资金不足！','w');return;}
+  G.money-=800;completeQuest('q8');notify('💊 支付了母亲索碧亚的医药费！任务完成！','g');
+  G.sf.paid=true;G.sf.metMom=true;
+  const momNPC=NPCS.find(n=>n.userData.id==='mother');if(momNPC){momNPC.userData.lines=['谢谢你，孩子，妈妈好多了...'];}
+  exitBuilding();updateHUD();
+}
+function buyIntel(){
+  if(G.money<50){notify('情报费需要$50！','w');return;}
+  G.money-=50;const intels=['警察今晚会在市场附近巡逻，暂停销赃！','有人在举报可疑活动，小心你的工人！','工厂区域监控摄像头坏了，好时机！','财务调查组正在追踪大额现金流向。','警察内部有人出售情报，需要联系人？'];
+  notify('🕵️ 情报：'+intels[Math.floor(Math.random()*intels.length)],'i');updateHUD();
+}
+function toggleAuto(){
+  G.autoProducing=!G.autoProducing;
+  notify(G.autoProducing?'🏭 自动化生产已开启！每20秒生产一件。':'🏭 自动化生产已暂停。',G.autoProducing?'i':'w');
+}
+function showWantedBoard(){
+  openPanel('custom');document.getElementById('ptitle').textContent='📋 通缉公告栏';
+  document.getElementById('pcontent').innerHTML=`<div style="background:rgba(139,0,0,.15);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="color:#ef4444;font-size:14px;font-weight:600;margin-bottom:6px">⚠ 当前调查状态</div>
+    <div style="color:#ddd;font-size:12px">警戒等级: ${G.investLevel}/4 | 热度: ${Math.floor(G.heat)}/100</div>
+    <div style="color:#aaa;font-size:11px;margin-top:6px">${G.investLevel===0?'当前无调查。保持低调。':G.investLevel<=2?'轻度监控中，减少活动。':'⚠ 高度怀疑！停止生产！'}</div>
+  </div>
+  <div style="color:#888;font-size:12px">📄 近期事件：</div>
+  <div style="color:#aaa;font-size:11px;margin-top:8px;line-height:1.8">
+    • 假币案件侦查中<br>• 多处市场报告异常现金流动<br>• 请市民配合调查<br>• 匿名举报有奖
+  </div>`;
+}
+
+// ============================================================
+// FORGE MINI-GAME
+// ============================================================
+const RECIPES=[
+  {id:'f5',n:'假5元',icon:'💴',req:{paper:2,ink:1},steps:[{n:'准备特制纸张',i:'📄'},{n:'调配墨水配方',i:'🖊️'},{n:'对齐精密印版',i:'🎯'},{n:'施压高速印刷',i:'🖨️'},{n:'检查质量成品',i:'🔍'}],reward:8,heat:2,sk:'basicForgery',gn:'假5元'},
+  {id:'f20',n:'假20元',icon:'💵',req:{paper:3,ink:2},steps:[{n:'裁剪特种纸',i:'✂️'},{n:'调配彩色墨水',i:'🎨'},{n:'印刷正面图案',i:'🖨️'},{n:'印刷背面图案',i:'🖨️'},{n:'压膜热处理',i:'🔧'},{n:'质量精密检验',i:'🔍'}],reward:25,heat:4,sk:'midForgery',gn:'假20元'},
+  {id:'f100',n:'假100元',icon:'💶',req:{paper:5,ink:3},steps:[{n:'特种纸预处理',i:'📋'},{n:'校准印刷参数',i:'⚙️'},{n:'印刷底层纹路',i:'🖨️'},{n:'主图精确印刷',i:'🖨️'},{n:'嵌入安全特征',i:'🔒'},{n:'压制全息水印',i:'💧'},{n:'终极质检',i:'🔍'}],reward:80,heat:10,sk:'advForgery',gn:'假100元'},
+  {id:'fdoc',n:'假证件',icon:'📋',req:{paper:4,ink:2},steps:[{n:'扫描原版模板',i:'📸'},{n:'调整数字参数',i:'💻'},{n:'精确激光印刷',i:'🖨️'},{n:'添加防伪涂层',i:'🔒'},{n:'精密裁切成型',i:'✂️'}],reward:50,heat:7,sk:'midForgery',gn:'假证件'},
+  {id:'fshoe',n:'假名牌鞋',icon:'👟',req:{paper:1,ink:1},steps:[{n:'准备材料',i:'📦'},{n:'裁剪皮料',i:'✂️'},{n:'缝合成型',i:'🧵'},{n:'印刷标志',i:'🖨️'}],reward:35,heat:3,sk:'midForgery',gn:'假名牌鞋'},
+  {id:'fjewel',n:'假珠宝',icon:'💎',req:{paper:0,ink:1},steps:[{n:'准备树脂',i:'🧪'},{n:'调制颜色',i:'🎨'},{n:'灌模成型',i:'💎'},{n:'打磨抛光',i:'✨'},{n:'质量检验',i:'🔍'}],reward:60,heat:6,sk:'advForgery',gn:'假珠宝'},
+];
+
+// ============================================================
+// FORGE MINI-GAME (Interactive) - v2 with real failure conditions
+// ============================================================
+let fgR=null,fgStep=0,fgMiniActive=false;
+let fgMisses=0;// target misses (>2 = fail)
+let fgStepTimer=0,fgStepTimeLimit=0,fgTimerRAF=null;// slow click timer
+let _targetPos=0,_targetDir=1,_targetRAF=null;
+
+// Step config: each step has a type and a time limit (seconds)
+// type: 'target' = click moving slider in green zone (3 misses = fail)
+//       'click'  = click button within time limit (too slow = fail)  
+//       'hold'   = hold button until bar full (release early resets progress)
+const STEP_TYPES = ['target','click','hold','target','click','hold','target'];
+// Time limits scale by recipe - more valuable = tighter timer
+function getStepTimeLimits(){
+  const m={f5:{click:9,hold:11,target:15},f20:{click:7,hold:9,target:12},f100:{click:5,hold:7,target:9},fdoc:{click:6,hold:8,target:11},fshoe:{click:8,hold:10,target:14},fjewel:{click:5,hold:8,target:10}};
+  return m[fgR?.id]||m.f5;
+}
+
+function openFG(){
+  if(G.plocked) document.exitPointerLock();
+  if(G.ilocked) document.exitPointerLock();
+  const avail=RECIPES.filter(r=>G.skills[r.sk]&&(r.req.paper===0||hasItem('paper',r.req.paper))&&hasItem('ink',r.req.ink));
+  if(!avail.length){notify('没有可制作的物品！检查材料或解锁技能','w');return;}
+  if(avail.length>1){showRecipePicker(avail);return;}
+  startFG(avail[0]);
+}
+
+function startFG(recipe){
+  fgR=recipe;fgStep=0;fgMisses=0;fgMiniActive=false;
+  cancelAnimationFrame(_targetRAF);cancelAnimationFrame(fgTimerRAF);
+  document.getElementById('fgtitle').textContent='🖨️ 制作：'+recipe.n;
+  document.getElementById('fgsub').textContent='完成每道工序 --「对齐印版」错误超过3次或操作太慢会导致失败！';
+  document.getElementById('fg-timeinfo').textContent='共 '+recipe.steps.length+' 步';
+  document.getElementById('fg-steps-bar').innerHTML=recipe.steps.map((_,i)=>
+    `<div id="fgdot${i}" style="flex:1;height:6px;background:rgba(255,255,255,.12);border-radius:3px;transition:background .3s;"></div>`
+  ).join('');
+  document.getElementById('fgres').style.display='none';
+  document.getElementById('fg-interactive').style.display='flex';
+  const fg=document.getElementById('fgame');
+  fg.style.display='flex';fg.style.alignItems='center';fg.style.justifyContent='center';
+  showFGStep(0);
+}
+
+function showFGStep(idx){
+  if(!fgR){return;}
+  if(idx>=fgR.steps.length){finishFG();return;}
+  fgStep=idx;fgMiniActive=true;
+  cancelAnimationFrame(_targetRAF);cancelAnimationFrame(fgTimerRAF);
+  const step=fgR.steps[idx];
+  const stepType=STEP_TYPES[idx%STEP_TYPES.length];
+  const timeLimit=(getStepTimeLimits()[stepType])||8;
+  fgStepTimer=timeLimit;fgStepTimeLimit=timeLimit;
+  document.getElementById('fg-step-icon').textContent=step.i;
+  document.getElementById('fg-step-name').textContent=step.n;
+  document.getElementById('fg-progress-fill').style.width='0%';
+  document.getElementById('fg-progress-pct').textContent='0%';
+  document.getElementById('fg-progress-label').textContent=step.n;
+  buildMiniGame(stepType,idx);
+  startStepTimer(stepType,timeLimit);
+}
+
+// -- Step countdown timer ----------------------------------
+let fgLastTime=0;
+function startStepTimer(stepType,limit){
+  fgLastTime=performance.now();
+  const tick=()=>{
+    if(!fgMiniActive) return;
+    const now=performance.now();
+    const dt=(now-fgLastTime)/1000;fgLastTime=now;
+    fgStepTimer-=dt;
+    // Show countdown in subtitle
+    const pct=document.getElementById('fg-progress-pct');
+    const tColor=fgStepTimer<3?'#ef4444':fgStepTimer<6?'#f97316':'#aaa';
+    if(stepType!=='hold'){// hold has its own display
+      const tsub=document.getElementById('fgsub');
+      if(tsub) tsub.textContent=`⏱ 剩余时间: ${fgStepTimer.toFixed(1)}秒${stepType==='target'?'  ❌ 失误: '+fgMisses+'/3':''}`;
+    }
+    if(fgStepTimer<=0){
+      // TIME UP = FAIL
+      forgeFail('操作太慢！时间耗尽。');return;
+    }
+    fgTimerRAF=requestAnimationFrame(tick);
+  };
+  fgTimerRAF=requestAnimationFrame(tick);
+}
+
+// -- Mini-game builders -----------------------------------
+function buildMiniGame(type,stepIdx){
+  const area=document.getElementById('fg-mini-area');
+  if(type==='target'){
+    // Moving slider - click when in green zone; 3 misses = fail
+    area.innerHTML=`
+      <div style="margin-bottom:8px;color:#aaa;font-size:11px;text-align:center;">
+        点击绿色区域！错误超过3次制作失败
+        <span id="fg-miss-display" style="color:#ef4444;margin-left:8px;font-weight:600;"></span>
+      </div>
+      <div id="fg-slider-track" style="position:relative;width:100%;height:52px;background:rgba(0,0,0,.4);border-radius:9px;overflow:hidden;cursor:pointer;" onclick="fgTargetClick(this)">
+        <div id="fg-zone" style="position:absolute;left:30%;width:28%;height:100%;background:rgba(74,222,128,.22);border-left:2px solid #4ade80;border-right:2px solid #4ade80;"></div>
+        <div id="fg-slider" style="position:absolute;width:28px;height:100%;background:#f97316;border-radius:6px;top:0;left:0;box-shadow:0 0 10px rgba(249,115,22,.6);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:12px;pointer-events:none;"><- 点击 -></div>
+      </div>`;
+    startSliderAnim(stepIdx);
+  } else if(type==='click'){
+    // Click button within time limit
+    const clicks_needed=4+stepIdx;
+    area.innerHTML=`
+      <div style="text-align:center;">
+        <div style="color:#aaa;font-size:11px;margin-bottom:10px;">快速点击完成操作（需要${clicks_needed}次）</div>
+        <button id="fg-click-btn" style="background:rgba(249,115,22,.15);border:2px solid #f97316;color:#f97316;padding:14px 36px;border-radius:10px;font-size:15px;cursor:pointer;pointer-events:all;user-select:none;-webkit-user-select:none;transition:transform .08s;"
+          onmousedown="fgClickBtnPress(${clicks_needed})" ontouchstart="fgClickBtnPress(${clicks_needed})">▶ 点击操作</button>
+        <div id="fg-click-counter" style="color:#f97316;font-size:18px;font-weight:700;margin-top:10px;">0 / ${clicks_needed}</div>
+      </div>`;
+    window._fgClickCount=0;window._fgClickNeed=clicks_needed;
+  } else if(type==='hold'){
+    // Hold button - release = progress freezes, keep holding to fill, must reach 100 within time
+    let holdProg=0;let holdInterval=null;
+    area.innerHTML=`
+      <div style="text-align:center;">
+        <div style="color:#aaa;font-size:11px;margin-bottom:10px;">按住按钮不放，填满进度条（松手进度停止，时间耗尽失败）</div>
+        <button id="fg-hold-btn" style="background:rgba(96,165,250,.14);border:2px solid #60a5fa;color:#60a5fa;padding:14px 36px;border-radius:10px;font-size:15px;cursor:pointer;pointer-events:all;user-select:none;-webkit-user-select:none;"
+          onmousedown="fgHoldStart2()" onmouseup="fgHoldStop2()" onmouseleave="fgHoldStop2()" ontouchstart="fgHoldStart2()" ontouchend="fgHoldStop2()">⏸ 按住</button>
+        <div style="margin-top:12px;height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;width:100%;">
+          <div id="fg-hold-fill" style="height:100%;background:linear-gradient(90deg,#60a5fa,#a78bfa);border-radius:5px;width:0%;transition:width .05s;"></div>
+        </div>
+        <div id="fg-hold-pct" style="color:#60a5fa;font-size:13px;margin-top:6px;">0%</div>
+      </div>`;
+    window._fgHoldProg=0;window._fgHoldInterval=null;
+  }
+}
+
+// -- Slider (target) logic ---------------------------------
+function startSliderAnim(stepIdx){
+  // Base speed by recipe value - cheap items = slow, expensive = fast
+  const baseSpeedMap={f5:0.45,f20:0.75,f100:1.3,fdoc:0.9,fshoe:0.6,fjewel:1.1};
+  const baseSpeed=baseSpeedMap[fgR?.id||'f5']||0.5;
+  // Each later step gets slightly faster (+5% per step)
+  const speed=baseSpeed*(1+stepIdx*0.05);
+  let pos=20+Math.random()*40,dir=Math.random()<0.5?1:-1;// start in random position
+  const slider=()=>{
+    if(!fgMiniActive){cancelAnimationFrame(_targetRAF);return;}
+    pos+=dir*speed;
+    if(pos>72||pos<0){dir*=-1;pos=Math.max(0,Math.min(72,pos));}
+    const sl=document.getElementById('fg-slider');
+    if(sl) sl.style.left=pos+'%';
+    _targetRAF=requestAnimationFrame(slider);
+  };
+  _targetRAF=requestAnimationFrame(slider);
+}
+window.fgTargetClick=function(el){
+  if(!fgMiniActive) return;
+  const sl=document.getElementById('fg-slider');
+  if(!sl) return;
+  const pos=parseFloat(sl.style.left||0);
+  const inZone=pos>=30&&pos<=58;// zone is 30%-58%
+  const missEl=document.getElementById('fg-miss-display');
+  if(inZone){
+    // HIT - add chunk of progress
+    playSliderHit();
+    const prog=parseFloat(document.getElementById('fg-progress-fill').style.width||0)+34;
+    document.getElementById('fg-progress-fill').style.width=Math.min(100,prog)+'%';
+    document.getElementById('fg-progress-pct').textContent=Math.floor(Math.min(100,prog))+'%';
+    el.style.background='rgba(74,222,128,.18)';
+    setTimeout(()=>{if(el)el.style.background='rgba(0,0,0,.4)';},120);
+    const dot=document.getElementById('fgdot'+fgStep);
+    if(dot) dot.style.background=`hsl(${prog*1.2},70%,50%)`;
+    if(prog>=100){
+      cancelAnimationFrame(_targetRAF);
+      stepSuccess();
+    }
+  } else {
+    // MISS
+    playSliderMiss();fgMisses++;
+    if(missEl) missEl.textContent='❌'.repeat(Math.min(fgMisses,3));
+    el.style.background='rgba(239,68,68,.2)';
+    setTimeout(()=>{if(el)el.style.background='rgba(0,0,0,.4)';},180);
+    if(fgMisses>=3){
+      cancelAnimationFrame(_targetRAF);
+      forgeFail('印刷版对齐错误超过3次！');
+    }
+  }
+};
+
+// -- Click (rapid) logic ----------------------------------
+window.fgClickBtnPress=function(need){
+  if(!fgMiniActive) return;
+  playForgeClick();
+  window._fgClickCount=(window._fgClickCount||0)+1;
+  const cnt=window._fgClickCount;
+  const ctr=document.getElementById('fg-click-counter');
+  if(ctr) ctr.textContent=cnt+' / '+need;
+  const btn=document.getElementById('fg-click-btn');
+  if(btn){btn.style.transform='scale(.94)';setTimeout(()=>{if(btn)btn.style.transform='';},80);}
+  const prog=Math.floor(cnt/need*100);
+  document.getElementById('fg-progress-fill').style.width=prog+'%';
+  document.getElementById('fg-progress-pct').textContent=prog+'%';
+  if(cnt>=need){stepSuccess();}
+};
+
+// -- Hold logic --------------------------------------------
+window.fgHoldStart2=function(){
+  if(!fgMiniActive) return;
+  window._fgHoldInterval=setInterval(()=>{
+    if(!fgMiniActive){clearInterval(window._fgHoldInterval);return;}
+    window._fgHoldProg=Math.min(100,(window._fgHoldProg||0)+2.5);
+    const fill=document.getElementById('fg-hold-fill');
+    const pct=document.getElementById('fg-hold-pct');
+    if(fill) fill.style.width=window._fgHoldProg+'%';
+    if(pct) pct.textContent=Math.floor(window._fgHoldProg)+'%';
+    document.getElementById('fg-progress-fill').style.width=window._fgHoldProg+'%';
+    document.getElementById('fg-progress-pct').textContent=Math.floor(window._fgHoldProg)+'%';
+    if(window._fgHoldProg>=100){clearInterval(window._fgHoldInterval);stepSuccess();}
+  },60);
+};
+window.fgHoldStop2=function(){clearInterval(window._fgHoldInterval);};
+
+// -- Space key support -------------------------------------
+function fgSpacePress(){
+  if(!fgR||!fgMiniActive) return;
+  const type=STEP_TYPES[fgStep%STEP_TYPES.length];
+  if(type==='click') fgClickBtnPress(window._fgClickNeed||4);
+  else if(type==='target') fgTargetClick(document.getElementById('fg-slider-track'));
+}
+
+// -- Step success ------------------------------------------
+function stepSuccess(){
+  if(!fgMiniActive) return;
+  fgMiniActive=false;
+  clearInterval(window._fgHoldInterval);
+  cancelAnimationFrame(_targetRAF);
+  cancelAnimationFrame(fgTimerRAF);
+  const dot=document.getElementById('fgdot'+fgStep);
+  if(dot) dot.style.background='#4ade80';
+  document.getElementById('fg-progress-fill').style.width='100%';
+  document.getElementById('fg-progress-pct').textContent='100%';
+  playStepDone();
+  G.st=Math.max(0,G.st-3);
+  G.timeMin=Math.min(1439,G.timeMin+10);
+  updateTimeHUD();updateHUD();
+  setTimeout(()=>showFGStep(fgStep+1),350);
+}
+
+function forgeFail(reason){
+  fgMiniActive=false;
+  clearInterval(window._fgHoldInterval);
+  cancelAnimationFrame(_targetRAF);
+  cancelAnimationFrame(fgTimerRAF);
+  // Consume ALL materials
+  if(fgR.req.paper>0) deductItem('paper',fgR.req.paper);
+  deductItem('ink',fgR.req.ink);
+  G.st=Math.max(0,G.st-8);
+  fgMisses=0;
+  document.getElementById('fg-interactive').style.display='none';
+  document.getElementById('fgres').style.display='block';
+  document.getElementById('fgri').textContent='💥';
+  document.getElementById('fgrt').style.color='#ef4444';
+  document.getElementById('fgrt').textContent='制作失败！';
+  document.getElementById('fgrd').textContent=(reason||'操作失误')+'\n原材料全部损失 | 体力-8 | 经验+2';
+  addExp(2);
+  updateHUD();
+  notify('💥 制作失败：'+(reason||'操作失误')+'所有材料损失','d');playForgeFail();
+}
+
+function finishFG(){
+  if(!fgR) return;
+  fgMiniActive=false;
+  clearInterval(window._fgHoldInterval);
+  cancelAnimationFrame(_targetRAF);
+  if(fgR.req.paper>0) deductItem('paper',fgR.req.paper);
+  deductItem('ink',fgR.req.ink);
+  G.money+=fgR.reward;G.heat=Math.min(G.maxHeat,G.heat+fgR.heat);
+  G.totalMade++;G.totalEarned+=fgR.reward;
+  const ex=G.fakeGoods.find(g=>g.gn===fgR.gn);
+  if(ex) ex.cnt++;else G.fakeGoods.push({gn:fgR.gn,icon:fgR.icon,cnt:1,val:fgR.reward});
+  // EXP reward: basic=5, mid=12, adv=25, doc=15, shoe=8, jewel=18
+  // Quest tracking
+  if(fgR.id==='f20'){const q8=G.quests.find(q=>q.id==='q8');if(q8&&!q8.done){q8.cnt=(q8.cnt||0)+1;if(q8.cnt>=q8.need)completeQuest('q8');else updateQuestLog();}}
+  if(fgR.id==='f100') completeQuest('q12');
+  const expTable={f5:5,f20:12,f100:25,fdoc:15,fshoe:8,fjewel:18};
+  const expGain=expTable[fgR.id]||8;
+  addExp(expGain);
+  notify('⭐ 经验+'+expGain+' (总计:'+G.exp+')','i');
+  document.getElementById('fg-interactive').style.display='none';
+  document.getElementById('fgres').style.display='block';
+  document.getElementById('fgri').textContent=fgR.icon;
+  document.getElementById('fgrt').textContent='✅ '+fgR.n+' 制作成功！';playForgeSuccess();
+  document.getElementById('fgrd').textContent='+$'+fgR.reward+' | 热度+'+fgR.heat+' | 体力-'+(fgR.steps.length*3);
+  completeQuest('q3');updateHUD();
+  if(G.heat>70) notify('⚠️ 热度过高！减少活动或去祈祷','w');
+  if(G.heat>60) G.investLevel=Math.min(4,G.investLevel+1);
+  updateInvestigation();
+}
+window.closeFG=()=>{
+  fgMiniActive=false;clearInterval(window._fgHoldInterval);cancelAnimationFrame(_targetRAF);
+  document.getElementById('fgame').style.display='none';fgR=null;
+};
+
+// ============================================================
+// INVENTORY HELPERS
+// ============================================================
+function hasItem(id,n){return(G.inventory.find(i=>i&&i.id===id)?.cnt||0)>=n;}
+function deductItem(id,n){const it=G.inventory.find(i=>i&&i.id===id);if(it) it.cnt=Math.max(0,it.cnt-n);}
+function giveItem(id,icon,name,n){
+  const ex=G.inventory.find(i=>i&&i.id===id);
+  if(ex){ex.cnt+=n;return;}
+  const slot=G.inventory.findIndex(i=>!i);if(slot>=0) G.inventory[slot]={id,icon,n:name,cnt:n};
+}
+
+// ============================================================
+// SHOP SYSTEM
+// ============================================================
+const SHOPDATA={
+  materials:[
+    {id:'paper',icon:'📄',n:'纸张 x5',price:6,give:{id:'paper',icon:'📄',n:'纸张',cnt:5}},
+    {id:'paper2',icon:'📦',n:'纸张 x15',price:15,give:{id:'paper',icon:'📄',n:'纸张',cnt:15}},
+    {id:'ink',icon:'🖊️',n:'墨水 x3',price:5,give:{id:'ink',icon:'🖊️',n:'墨水',cnt:3}},
+    {id:'ink2',icon:'🧴',n:'墨水 x10',price:14,give:{id:'ink',icon:'🖊️',n:'墨水',cnt:10}},
+  ],
+  food:[
+    {id:'laksa',icon:'🍜',n:'叻沙',price:8,sp:28},{id:'rice',icon:'🍚',n:'米饭',price:5,sp:22},
+    {id:'noodle',icon:'🍝',n:'炒面',price:7,sp:18},{id:'coffee',icon:'☕',n:'咖啡',price:6,sp:14},
+    {id:'water',icon:'💧',n:'矿泉水',price:3,sp:10},{id:'bread',icon:'🍞',n:'面包',price:4,sp:12},
+    {id:'fruit',icon:'🍉',n:'西瓜',price:6,sp:18},{id:'satay',icon:'🍢',n:'沙爹',price:9,sp:25},
+    {id:'durian',icon:'🌶️',n:'榴莲',price:12,sp:35},{id:'coconut',icon:'🥥',n:'椰子水',price:5,sp:16},
+  ],
+  tools:[
+    {id:'strip',icon:'🔒',n:'安全线',price:250,give:{id:'strip',icon:'🔒',n:'安全线',cnt:1}},
+    {id:'lens',icon:'🔬',n:'放大镜',price:80,give:{id:'lens',icon:'🔬',n:'放大镜',cnt:1}},
+    {id:'cut',icon:'✂️',n:'裁纸刀',price:35,give:{id:'cut',icon:'✂️',n:'裁纸刀',cnt:1}},
+    {id:'uv',icon:'💡',n:'紫外灯',price:120,give:{id:'uv',icon:'💡',n:'紫外灯',cnt:1}},
+  ],
+  clothing:[
+    {id:'shirt',icon:'👕',n:'普通衬衫',price:20,heatDown:5,desc:'换上新衣，不那么显眼'},
+    {id:'jacket',icon:'🧥',n:'本地传统服饰',price:45,heatDown:12,desc:'穿上当地服装，警察不注意'},
+    {id:'mask',icon:'😷',n:'口罩帽子',price:30,heatDown:8,desc:'遮住面孔，降低辨识度'},
+    {id:'suit',icon:'🤵',n:'西装正装',price:80,heatDown:20,desc:'穿得体面，不像嫌疑人'},
+    {id:'disguise',icon:'🎭',n:'完整乔装套装',price:150,heatDown:35,desc:'彻底改变外观，大幅降低热度'},
+  ],
+};
+function openShop(cat){
+  if(G.plocked) document.exitPointerLock();
+  openPanel('custom');
+  const catN={materials:'📄 材料商店',food:'🍜 食物饮料',tools:'🔧 工具设备',clothing:'👕 服装店'};
+  document.getElementById('ptitle').textContent=catN[cat]||'商店';
+  const items=SHOPDATA[cat]||[];
+  let h=`<div class="statcards"><div class="statcard"><div class="stcv" style="color:#ffd700">$${G.money}</div><div class="stcl">金钱</div></div><div class="statcard"><div class="stcv" style="color:#4ade80">${Math.floor(G.st)}</div><div class="stcl">体力</div></div></div>`;
+  h+=`<div class="tabs"><div class="tab ${cat==='materials'?'on':''}" onclick="openShop('materials')">材料</div><div class="tab ${cat==='food'?'on':''}" onclick="openShop('food')">食物</div><div class="tab ${cat==='tools'?'on':''}" onclick="openShop('tools')">工具</div><div class="tab ${cat==='clothing'?'on':''}" onclick="openShop('clothing')">服装</div></div>`;
+  h+='<div class="sgrid">';
+  items.forEach((it,i)=>{
+    h+=`<div class="scard" onclick="buyShopItem(${i},'${cat}')">
+      <span style="font-size:26px">${it.icon}</span>
+      <div><div style="color:#ddd;font-size:13px">${it.n}</div>
+      <div style="color:#ffd700;font-size:12px">$${it.price}</div>
+      ${it.sp?`<div style="color:#4ade80;font-size:10px">体力+${it.sp}</div>`:''}
+      ${it.heatDown?`<div style="color:#f97316;font-size:10px">热度-${it.heatDown}</div>`:''}
+      ${it.desc?`<div style="color:#666;font-size:9px">${it.desc}</div>`:''}
+      </div></div>`;
+  });
+  h+='</div>';
+  document.getElementById('pcontent').innerHTML=h;
+}
+window.buyShopItem=function(i,cat){
+  const it=SHOPDATA[cat][i];if(!it) return;
+  if(G.money<it.price){notify('金钱不足！','w');return;}
+  G.money-=it.price;
+  if(it.sp){G.st=Math.min(G.maxSt,G.st+it.sp);notify(`🍽️ ${it.icon} 体力+${it.sp}`);}
+  if(it.heatDown){G.heat=Math.max(0,G.heat-it.heatDown);notify(`👕 换上${it.n}！热度-${it.heatDown}`,'g');playTone(523,.2,'sine',.08);}
+  if(it.give){giveItem(it.give.id,it.give.icon,it.give.n||it.n,it.give.cnt);notify(`✅ 购买 ${it.n}`);}
+  updateHUD();openShop(cat);
+};
+
+function openSellPanel(){
+  openPanel('custom');document.getElementById('ptitle').textContent='🤫 销赃';
+  if(!G.fakeGoods.length){document.getElementById('pcontent').innerHTML='<div style="color:#555;padding:20px;text-align:center">没有可出售的赃品<br><span style="font-size:12px">先去制作台制作一些假币</span></div>';return;}
+  const catchPct=G.skills.finance2?5:G.skills.finance1?15:30;
+  const rClass=catchPct<=5?'rlo':catchPct<=15?'rmd':'rhi';
+  let h=`<div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:9px;padding:10px;margin-bottom:14px">
+    <div style="color:#f97316;font-size:12px">被抓概率: ${catchPct}% | 金融技能降低风险</div>
+    <div style="color:#888;font-size:10px;margin-top:3px">解锁金融初级(-10%) / 金融高级(-25%)</div>
+  </div>`;
+  G.fakeGoods.forEach((g,gi)=>{
+    h+=`<div class="sellrow">
+      <span style="font-size:22px">${g.icon}</span>
+      <div style="flex:1"><div style="color:#ddd;font-size:13px">${g.gn} x${g.cnt}</div>
+      <div style="color:#888;font-size:10px">每件 $${g.val} | 总 $${g.val*g.cnt}</div></div>
+      <span class="rbadge ${rClass}">${catchPct}% 风险</span>
+      <button onclick="sellFake(${gi})" style="background:rgba(249,115,22,.1);border:1px solid #f97316;color:#f97316;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;margin-left:8px;pointer-events:all">出售1件</button>
+      <button onclick="sellAll(${gi})" style="background:rgba(239,68,68,.1);border:1px solid #ef4444;color:#ef4444;padding:5px 10px;border-radius:7px;cursor:pointer;font-size:11px;margin-left:4px;pointer-events:all">全卖</button>
+    </div>`;
+  });
+  document.getElementById('pcontent').innerHTML=h;
+}
+window.sellFake=function(gi){
+  const g=G.fakeGoods[gi];if(!g||g.cnt<1) return;
+  const catchPct=G.skills.finance2?5:G.skills.finance1?15:30;
+  if(Math.random()*100<catchPct){caughtSelling();}
+  else{
+    G.money+=g.val;G.totalSold++;G.totalEarned+=g.val;
+    notify(`✅ 出售 ${g.gn} +$${g.val}`);
+    g.cnt--;if(g.cnt<=0)G.fakeGoods.splice(gi,1);
+    G.heat=Math.min(G.maxHeat,G.heat+3);completeQuest('q4');
+  }
+  updateHUD();openSellPanel();
+};
+window.sellAll=function(gi){
+  const g=G.fakeGoods[gi];if(!g) return;
+  const catchPct=G.skills.finance2?5:G.skills.finance1?15:30;
+  if(Math.random()*100<Math.min(90,catchPct*g.cnt/2)){caughtSelling();return;}
+  const total=g.val*g.cnt;G.money+=total;G.totalSold+=g.cnt;G.totalEarned+=total;
+  notify(`✅ 批量出售 ${g.gn} x${g.cnt} +$${total}`);G.fakeGoods.splice(gi,1);
+  G.heat=Math.min(G.maxHeat,G.heat+g.cnt*3);completeQuest('q4');
+  updateHUD();openSellPanel();
+};
+function caughtSelling(){
+  notify('🚨 警察发现了！逃跑中...','d');
+  G.heat=Math.min(G.maxHeat,G.heat+30);
+  G.money=Math.max(0,G.money-100);
+  G.investLevel=Math.min(4,G.investLevel+1);
+  notify('热度+30 罚款$100 调查升级！','d');
+  updateInvestigation();
+}
+
+// ============================================================
+// BANK PANEL
+// ============================================================
+function openBankPanel(){
+  openPanel('custom');document.getElementById('ptitle').textContent='🏦 国家银行';
+  let h=`<div class="statcards"><div class="statcard"><div class="stcv" style="color:#ffd700">$${G.money}</div><div class="stcl">账户余额</div></div><div class="statcard"><div class="stcv" style="color:#f97316">${Math.floor(G.heat)}</div><div class="stcl">当前热度</div></div></div>`;
+  if(G.skills.finance1||G.skills.finance2){
+    h+=`<div style="border:1px solid rgba(96,165,250,.3);border-radius:10px;padding:14px;margin-bottom:12px;background:rgba(96,165,250,.04)">
+      <div style="color:#60a5fa;font-size:13px;font-weight:600;margin-bottom:6px">💹 资金清洗服务</div>
+      <div style="color:#888;font-size:11px;margin-bottom:10px">通过企业账户转移资金，快速降低调查热度</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="launder(200,15)" style="flex:1;background:rgba(96,165,250,.1);border:1px solid #60a5fa;color:#60a5fa;padding:8px;border-radius:7px;cursor:pointer;font-size:12px;pointer-events:all">$200->热度-15</button>
+        <button onclick="launder(500,40)" style="flex:1;background:rgba(96,165,250,.1);border:1px solid #60a5fa;color:#60a5fa;padding:8px;border-radius:7px;cursor:pointer;font-size:12px;pointer-events:all">$500->热度-40</button>
+      </div>
+    </div>`;
+    if(G.skills.finance2){
+      h+=`<div style="border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:14px;margin-bottom:12px;background:rgba(167,139,250,.04)">
+        <div style="color:#a78bfa;font-size:13px;font-weight:600;margin-bottom:6px">🏢 离岸账户转移</div>
+        <button onclick="launder(1000,80)" style="background:rgba(167,139,250,.1);border:1px solid #a78bfa;color:#a78bfa;padding:8px 18px;border-radius:7px;cursor:pointer;font-size:12px;pointer-events:all">$1000->热度-80</button>
+      </div>`;
+    }
+  } else {
+    h+=`<div style="color:#555;font-size:12px;border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:14px;margin-bottom:12px">解锁<span style="color:#a78bfa">金融初级</span>技能后可访问资金清洗服务</div>`;
+  }
+  h+=`<div style="border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:12px"><div style="color:#ddd;font-size:13px;margin-bottom:4px">📊 账户统计</div><div style="color:#888;font-size:11px;line-height:1.8">总制作: ${G.totalMade}件<br>总销售: ${G.totalSold}件<br>总收入: $${G.totalEarned}</div></div>`;
+  document.getElementById('pcontent').innerHTML=h;
+  window.launder=function(cost,heatDown){
+    if(G.money<cost){notify('资金不足！','w');return;}
+    G.money-=cost;G.heat=Math.max(0,G.heat-heatDown);
+    notify(`💹 洗钱完成！热度-${heatDown}`,'i');updateHUD();openBankPanel();
+    completeQuest('q9');G.investLevel=Math.max(0,G.investLevel-1);updateInvestigation();
+  };
+}
+
+// ============================================================
+// GANG SYSTEM
+// ============================================================
+const GANG_MEMBERS=[
+  {id:'g1',n:'混混波列',icon:'😤',role:'enforcer',salary:30,bonus:'保护费收入+$50/天',hire:200},
+  {id:'g2',n:'快腿阿飞',icon:'🏃',role:'runner',salary:20,bonus:'销赃成功率+10%',hire:150},
+  {id:'g3',n:'会计老陈',icon:'🧮',role:'accountant',salary:40,bonus:'热度冷却速度x1.5',hire:300},
+  {id:'g4',n:'线人小妹',icon:'👁',role:'spy',salary:25,bonus:'提前预警警察巡逻',hire:180},
+];
+function openGangPanel(){
+  openPanel('custom');document.getElementById('ptitle').textContent='👥 帮派管理';
+  if(!G.skills.gangRecruit&&!G.sf.gangUnlocked){
+    document.getElementById('pcontent').innerHTML=`<div style="text-align:center;padding:24px;color:#555"><div style="font-size:36px;margin-bottom:12px">🔒</div><div>与叔叔对话解锁帮派系统<br><span style="font-size:11px;color:#444">（叔叔会在游戏中途提示你）</span></div></div>`;return;
+  }
+  let h=`<div class="statcards"><div class="statcard"><div class="stcv" style="color:#a78bfa">${G.gang.length}</div><div class="stcl">帮派成员</div></div><div class="statcard"><div class="stcv" style="color:#ef4444">$${G.gang.reduce((a,m)=>a+m.salary,0)}</div><div class="stcl">日薪支出</div></div></div>`;
+  if(G.gang.length){h+='<div style="color:#a78bfa;font-size:12px;margin-bottom:10px">当前成员</div>';G.gang.forEach(m=>{h+=`<div class="gangmem"><span style="font-size:24px">${m.icon}</span><div style="flex:1"><div style="color:#ddd;font-size:13px">${m.n}</div><div class="gangstat">${m.bonus}</div></div><div style="color:#f97316;font-size:11px">-$${m.salary}/天</div></div>`;});}
+  h+='<div style="color:#888;font-size:12px;margin:12px 0 10px">可招募</div>';
+  GANG_MEMBERS.filter(m=>!G.gang.find(g=>g.id===m.id)).forEach(m=>{
+    h+=`<div class="gangmem"><span style="font-size:24px">${m.icon}</span><div style="flex:1"><div style="color:#ddd;font-size:13px">${m.n} <span style="color:#888;font-size:10px">(${m.role})</span></div><div class="gangstat">${m.bonus}</div></div><button onclick="hireGang('${m.id}')" style="background:rgba(167,139,250,.1);border:1px solid #a78bfa;color:#a78bfa;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;pointer-events:all">招募 $${m.hire}</button></div>`;
+  });
+  document.getElementById('pcontent').innerHTML=h;
+}
+window.hireGang=function(id){
+  const m=GANG_MEMBERS.find(x=>x.id===id);if(!m) return;
+  if(G.money<m.hire){notify('资金不足！','w');return;}
+  G.money-=m.hire;G.gang.push(m);
+  notify(`✅ 招募了 ${m.n}！${m.bonus}`,'g');
+  completeQuest('q7');updateHUD();openGangPanel();
+  G.sf.gangUnlocked=true;
+};
+// Gang daily effects
+function applyGangEffects(dt){
+  G.gang.forEach(m=>{
+    if(m.role==='accountant') G.heat=Math.max(0,G.heat-.008*1.5*dt*60);
+    if(m.role==='spy'&&G.heat>60&&Math.random()<.001) notify('👁 线人预警：警察即将巡逻！远离市场！','w');
+  });
+}
+
+// ============================================================
+// PANELS SYSTEM
+// ============================================================
+function openPanel(type){
+  if(G.plocked) document.exitPointerLock();
+  const p=document.getElementById('panel');p.style.display='block';
+  if(type==='inv'){
+    document.getElementById('ptitle').textContent='🎒 背包';
+    let h=`<div class="statcards">
+      <div class="statcard"><div class="stcv" style="color:#ffd700">$${G.money}</div><div class="stcl">金钱</div></div>
+      <div class="statcard"><div class="stcv" style="color:#4ade80">${Math.floor(G.st)}</div><div class="stcl">体力</div></div>
+      <div class="statcard"><div class="stcv" style="color:#f97316">${Math.floor(G.heat)}</div><div class="stcl">热度</div></div>
+    </div>`;
+    h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px">';
+    G.inventory.forEach((it,i)=>h+=`<div style="aspect-ratio:1;border:${i===G.activeSlot?'2px solid #ffd700':'1px solid rgba(255,255,255,.14)'};border-radius:9px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:4px" onclick="G.activeSlot=${i};updateHotbar()">
+      <span style="font-size:22px">${it?it.icon:''}</span>${it?`<span style="font-size:9px;color:#888;margin-top:2px">${it.n}</span><span style="font-size:9px;color:#aaa">${it.cnt>1?'x'+it.cnt:''}</span>`:''}</div>`);
+    h+='</div>';
+    if(G.fakeGoods.length){h+='<div style="color:#f97316;font-size:12px;margin-bottom:8px">📦 待出售赃品</div>';G.fakeGoods.forEach(g=>h+=`<div class="sellrow"><span style="font-size:20px">${g.icon}</span><div><div style="color:#ddd;font-size:12px">${g.gn} x${g.cnt}</div><div style="color:#888;font-size:10px">$${g.val}/件</div></div></div>`);}
+    h+=`<div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px;margin-top:8px">
+      <div style="color:#888;font-size:11px;line-height:1.8">📊 统计<br>制作: ${G.totalMade}件 | 出售: ${G.totalSold}件 | 总收入: $${G.totalEarned}<br>调查等级: ${G.investLevel}/4 | 帮派成员: ${G.gang.length}人</div>
+    </div>`;
+    document.getElementById('pcontent').innerHTML=h;
+  }
+  else if(type==='skills'){
+    document.getElementById('ptitle').textContent='⭐ 技能 & 经验';
+    const skillDefs=[
+      {id:'basicForgery',icon:'📄',n:'基础伪造',d:'制作假5元（初始拥有）',req:0},
+      {id:'streetLaunder',icon:'🏪',n:'街头洗钱',d:'销赃风险-10%',req:30},
+      {id:'midForgery',icon:'💵',n:'中级伪造',d:'解锁假20元、假证件、假名牌',req:50},
+      {id:'gangRecruit',icon:'👥',n:'帮派招募',d:'可招募帮派成员',req:60},
+      {id:'finance1',icon:'💹',n:'金融初级',d:'风险-10% & 银行洗钱服务',req:80},
+      {id:'advForgery',icon:'💶',n:'高级伪造',d:'解锁假100元、假珠宝',req:150},
+      {id:'finance2',icon:'🏦',n:'金融高级',d:'风险至5% & 离岸账户',req:200},
+      {id:'autoPress',icon:'🏭',n:'自动化生产',d:'工厂自动出货',req:300},
+    ];
+    // EXP progress bar towards next unlock
+    const nextSkill=skillDefs.filter(s=>!G.skills[s.id]&&s.req>0).sort((a,b)=>a.req-b.req)[0];
+    const nextReq=nextSkill?nextSkill.req:skillDefs[skillDefs.length-1].req;
+    const prevReq=nextSkill?skillDefs.filter(s=>G.skills[s.id]&&s.req<nextReq).sort((a,b)=>b.req-a.req)[0]?.req||0:0;
+    const pct=nextSkill?Math.min(100,Math.floor((G.exp-prevReq)/(nextReq-prevReq)*100)):100;
+    let h=`<div style="background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.22);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:#a78bfa;font-size:13px;">⭐ 总经验</span>
+        <span style="color:#a78bfa;font-size:16px;font-weight:700;">${G.exp}</span>
+      </div>
+      ${nextSkill?`<div style="color:#888;font-size:11px;margin-bottom:5px;">下一解锁: ${nextSkill.n} (需要${nextSkill.req}EXP)</div>
+      <div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#a78bfa,#60a5fa);border-radius:4px;"></div>
+      </div>`:'<div style="color:#4ade80;font-size:12px;">🎉 所有技能已解锁！</div>'}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px;">`;
+    skillDefs.forEach(sk=>{
+      const owned=G.skills[sk.id];
+      const locked=!owned&&G.exp<sk.req;
+      h+=`<div style="border:1px solid ${owned?'#4ade80':locked?'rgba(255,255,255,.06)':'rgba(255,255,255,.18)'};border-radius:9px;padding:10px 13px;display:flex;align-items:center;gap:10px;opacity:${locked?.4:1};">
+        <span style="font-size:22px;">${sk.icon}</span>
+        <div style="flex:1;">
+          <div style="color:${owned?'#4ade80':'#fff'};font-size:13px;">${sk.n}${owned?' ✓':''}</div>
+          <div style="color:#888;font-size:11px;">${sk.d}</div>
+          ${!owned?`<div style="color:#a78bfa;font-size:10px;margin-top:2px;">${locked?'需要 '+sk.req+' EXP（当前'+G.exp+'）':'可解锁！制作假币获得经验'}</div>`:''}
+        </div>
+      </div>`;
+    });
+    h+='</div>';
+    document.getElementById('pcontent').innerHTML=h;
+  }
+  else if(type==='props'){
+    document.getElementById('ptitle').textContent='🏗️ 房产购买';
+    let h='<div style="color:#888;font-size:11px;margin-bottom:14px">购买建筑物，扩大你的犯罪帝国！</div>';
+    BLDS.filter(b=>b.price>0).forEach(b=>{
+      const owned=b.bought||G.ownedBlds.includes(b.id);
+      h+=`<div class="pcard"><div class="pname">${b.n}</div>
+        <div class="pinfo">所有者: ${owned?'你 ✓':b.own} | 用途: ${b.int}</div>
+        <div class="pprice">${owned?'✓ 已拥有':'价格: $'+b.price.toLocaleString()}</div>
+        <button class="pbuy ${owned?'owned':''}" ${owned?'disabled':''} onclick="buyBldg('${b.id}',${b.price})">${owned?'已购买':'💰 购买'}</button>
+      </div>`;
+    });
+    document.getElementById('pcontent').innerHTML=h;
+  }
+  else if(type==='gang') openGangPanel();
+  else if(type==='warehouse'){
+    document.getElementById('ptitle').textContent='🏭 仓库管理';
+    let h=`<div class="statcards"><div class="statcard"><div class="stcv" style="color:#a78bfa">${G.fakeGoods.reduce((a,g)=>a+g.cnt,0)}</div><div class="stcl">总库存</div></div><div class="statcard"><div class="stcv" style="color:#4ade80">$${G.fakeGoods.reduce((a,g)=>a+g.val*g.cnt,0)}</div><div class="stcl">库存价值</div></div></div>`;
+    if(!G.fakeGoods.length) h+='<div style="color:#555;text-align:center;padding:20px">仓库是空的</div>';
+    G.fakeGoods.forEach(g=>h+=`<div class="sellrow"><span style="font-size:22px">${g.icon}</span><div style="flex:1"><div style="color:#ddd">${g.gn} x${g.cnt}</div><div style="color:#888;font-size:10px">总价值 $${g.val*g.cnt}</div></div></div>`);
+    document.getElementById('pcontent').innerHTML=h;
+  }
+  else if(type==='custom'){document.getElementById('ptitle').textContent='';document.getElementById('pcontent').innerHTML='';}
+}
+window.buyBldg=function(id,price){
+  if(G.money<price){notify('资金不足！','w');return;}
+  G.money-=price;G.ownedBlds.push(id);
+  const b=BLDS.find(x=>x.id===id);if(b){b.bought=true;b.own='你';}
+  notify(`🎉 成功购买 ${b?.n}！`,'g');G.sp++;if(b?.int==='factory')completeQuest('q6');else if(b?.int==='warehouse')completeQuest('q10');updateHUD();openPanel('props');
+  // unlock uncle gang speech
+  if(G.ownedBlds.length>=2&&!G.sf.gangUnlocked){G.sf.gangUnlocked=true;notify('叔叔：阿南，是时候招募一些手下了！[G键]','i');}
+};
+document.getElementById('pclose').onclick=()=>{
+  document.getElementById('panel').style.display='none';
+  if(!G.inRoom&&!G.sleeping) setTimeout(()=>safePointerLock(cv),50);
+};
+function closeAll(){
+  document.getElementById('panel').style.display='none';
+  document.getElementById('dlg').style.display='none';
+  document.getElementById('fgame').style.display='none';
+  // Re-acquire pointer lock if in world view
+  if(!G.inRoom&&!G.sleeping){
+    setTimeout(()=>safePointerLock(cv),50);
+  }
+}
+
+// ============================================================
+// QUEST SYSTEM
+// ============================================================
+function completeQuest(id){
+  const q=G.quests.find(x=>x.id===id);if(!q||q.done) return;
+  q.done=true;G.sp+=q.reward||1;notify(`✅ 任务完成：${q.txt} | 技能点+${q.reward}`,'g');updateHUD();updateQuestLog();
+}
+function updateQuestLog(){
+  const el=document.getElementById('qitems');
+  const active=G.quests.filter(q=>!q.done).slice(0,4);
+  el.innerHTML=active.map(q=>{
+    const cntTxt=q.need?` (${q.cnt||0}/${q.need})`:''
+    return `<div class="qi">○ ${q.txt}${cntTxt}</div>`;
+  }).join('');
+  if(!active.length) el.innerHTML='<div class="qi" style="color:#4ade80">🎉 全部完成！</div>';
+}
+
+// ============================================================
+// DIALOG SYSTEM
+// ============================================================
+let dlgHist=[],curNPCDlg=null;
+function startDlg(npcMesh){
+  if(G.plocked) document.exitPointerLock();if(G.ilocked) document.exitPointerLock();
+  curNPCDlg=npcMesh;dlgHist=[];
+  const def=npcMesh.userData;
+  const dlgEl=document.getElementById('dlg');dlgEl.style.display='block';
+  document.getElementById('dlgport').textContent=def.e||'😐';
+  document.getElementById('dlgname').textContent=def.n;
+  const rm={mother:'家庭成员',uncle:'叔叔/导师',trader:'市场商人',black_market:'黑市商人',police:'警察',worker:'工人',banker:'银行职员',doctor:'医生',gangster:'黑帮成员',barkeep:'酒吧老板',passerby:'路人',monk:'寺庙僧侣',market_keeper:'摊位管理员',factory_boss:'工厂老板',warehouse_boss:'仓库老板',gangster_indoor:'帮派成员',barkeep_indoor:'酒吧老板',police_indoor:'值班警察'};
+  // role label removed for cleaner UI
+  
+  let opening=def.lines?.[0]||'...';
+  if(def.role==='mother'){
+    if(!G.sf.metMom){G.sf.metMom=true;opening=def.story.first;completeQuest('q1');}
+    else if(G.sf.paid) opening=def.story.paid;
+    else if(G.money<200) opening=def.story.broke;
+    else if(G.money>2000) opening=def.story.rich;
+  }
+  if(def.role==='uncle'&&!G.sf.metUncle){G.sf.metUncle=true;opening=def.story.first;completeQuest('q1');}
+  if(def.role==='uncle'&&G.ownedBlds.length>=1&&!G.sf.uncle1){G.sf.uncle1=true;opening=def.story.gang;}
+  document.getElementById('dlgtxt').textContent=opening;
+  dlgHist=[{role:'assistant',content:opening}];
+  buildDlgChoices(def);
+}
+function buildDlgChoices(def){
+  const r=def.role;let cs;
+  if(r==='police_indoor') cs=['我只是参观','有什么规定？','再见'];
+  else if(r==='factory_boss'||r==='warehouse_boss') cs=['我想打工','我想购买建筑','最近生意怎么样？','再见'];
+  else if(r==='mother') cs=['妈妈我会筹到钱的！','最近身体好些了吗？','需要多少医药费？','再见妈妈'];
+  else if(r==='uncle') cs=['教我技术！','最近风声怎样？','怎么洗钱？','告诉我关于帮派','告辞叔叔'];
+  else if(r==='trader') cs=['买材料','买食物','有特殊货吗？','告辞'];
+  else if(r==='black_market') cs=['我要特殊材料','告辞'];
+  else if(r==='police') cs=['我只是路过','附近有什么可疑人？','好的，再见'];
+  else if(r==='doctor') cs=['需要多少医药费？','我现在缴费','改天再来'];
+  else if(r==='gangster') cs=['我要招募你','我不需要','告辞'];
+  else if(r==='barkeep') cs=['买情报$50','有没有传言？','告辞'];
+  else if(r==='passerby') cs=['你好！','这附近有什么好玩的？','告辞'];
+  else if(r==='monk') cs=['请为我祈祷','你在这里多久了？','告辞'];
+  else if(r==='gangster_indoor') cs=['我要招募你','今天有什么消息？','告辞'];
+  else if(r==='barkeep_indoor') cs=['买情报$50','有没有特殊消息？','告辞'];
+  else if(r==='police_indoor') cs=['我只是路过','这里有什么规定？','告辞'];
+  else if(r==='market_keeper') cs=['买材料','买食物','买服装','告辞'];
+  else cs=['你好！','最近怎么样？','告辞'];
+  const chEl=document.getElementById('dlgch');
+  chEl.style.flexDirection=cs.length<=3?'row':'column';
+  chEl.style.flexWrap='wrap';
+  chEl.innerHTML=cs.map(c=>`<button class="dc" onclick="sendDlg('${c.replace(/'/g,"\\'")}')">  ${c}</button>`).join('');
+}
+function closeDlg(){document.getElementById('dlg').style.display='none';document.getElementById('dlgch').innerHTML='';curNPCDlg=null;dlgHist=[];}
+
+window.sendDlg=function(msg){
+  const def=curNPCDlg?.userData;if(!def) return;
+  const farewells=['告辞','再见妈妈','告辞叔叔','告辞','改天再来','好的，再见','不用了，走了','好的，再见'];
+  if(farewells.includes(msg)){closeDlg();return;}
+
+  // -- Shortcut actions (no AI needed) ----------------------
+  if(msg==='教我技术！'){handleUncleTeach();return;}
+  if(msg==='告诉我关于帮派'){closeDlg();G.sf.gangUnlocked=true;G.skills.gangRecruit=true;notify('叔叔：去酒吧找街头混混，给他们钱就能招募。[G键]','i');return;}
+  if(msg==='我想打工'){const bldMap={factory_boss:'factory2',warehouse_boss:'wh1',chen:'factory',wang:'factory2'};const bid=bldMap[def?.id||def?.role];const wb=bid?BLDS.find(b=>b.id===bid):null;if(wb){closeDlg();openWorkPanel(wb);}else notify('暂时没有工作机会','w');return;}
+  if(msg==='我想购买建筑'){closeDlg();openPanel('props');return;}
+  if(msg==='买材料'){closeDlg();openShop('materials');return;}
+  if(msg==='买食物'){closeDlg();openShop('food');return;}
+  if(msg==='买服装'){closeDlg();openShop('clothing');return;}
+  if(msg==='有特殊货吗？'||msg==='我要特殊材料'){closeDlg();openBMPanel();return;}
+  if(msg==='需要多少医药费？'){showDlgReply('手术费共需要$800，请尽快缴纳，否则病情会加重。手术很快，但需要钱。',def);return;}
+  if(msg==='我现在缴费'){payMedical();closeDlg();return;}
+  if(msg==='请为我祈祷'){pray();showDlgReply(G.lastPrayDay===G.day?'愿佛祖保佑施主，内心得以平静。':'三日之内你已祈祷过，请休养生息后再来。',def);return;}
+  if(msg==='我要招募你'&&(def.role==='gangster'||def.role==='gangster_indoor')){closeDlg();openGangPanel();return;}
+  if(msg==='买情报$50'||msg==='有没有特殊消息？'){buyIntel();return;}
+  if(msg==='怎么洗钱？'){showDlgReply('解锁金融技能后去银行找小张，他懂的。给点好处他会帮忙的。',def);return;}
+  if(msg==='我现在缴费'){payMedical();closeDlg();return;}
+
+  // -- Rule-based responses ----------------------------------
+  const reply=getRuleReply(def.role,def.id,msg);
+  showDlgReply(reply,def);
+};
+
+function showDlgReply(text,def){
+  document.getElementById('dlgtxt').textContent=text;
+  buildDlgChoices(def);
+}
+
+// -- Rule-based dialog engine ------------------------------
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+const RULE_DB={
+  mother:{
+    '最近身体好些了吗？':[
+      '好一点点了...但是头还是很痛。医生说要手术才能根治。',
+      '（叹气）没有你爸爸在身边，妈妈撑得很辛苦。',
+      '妈妈还好，只是担心你。你最近睡得好吗？',
+      '医生说如果不手术，病情还会加重...阿南，妈妈很担心。',
+    ],
+    '妈妈我会筹到钱的！':[
+      '孩子，妈妈相信你。但是不管怎么样，要守法啊。',
+      '（眼眶微红）妈妈知道你会想办法的...只是不要走弯路。',
+      '你说的妈妈相信。医药费的事，慢慢来，身体要紧。',
+      '好孩子...妈妈最欣慰的就是有你。',
+    ],
+    _default:[
+      '阿南，你来了。妈妈今天好一点了。',
+      '孩子，多吃点，别让自己太累了。',
+      '（轻声咳嗽）医生刚刚来过，说要注意休息。',
+      '家里还有钱吗？不够的话妈妈这里还有一点点。',
+      '最近外面怎么样？妈妈在这里什么都不知道。',
+    ],
+  },
+  uncle:{
+    '最近风声怎样？':[
+      '最近警察盯得很紧，你要减少产量，低调一点。',
+      '听说市区出了几张假币，搞得当局很紧张。你动作小一点。',
+      '没问题，但是不要在同一个地方重复交易。',
+      '风声还好。不过不要大意，警察也不是吃素的。',
+      '最近有人被抓了，我们要换一下交易的时间和地点。',
+    ],
+    '最近生意怎么样？':[
+      '还不错，但是风险也在增加。记住，贪心是最大的敌人。',
+      '我已经慢下来了。你刚入行，不要太急躁。',
+      '生意这个东西，进多少出多少，做好账很重要。',
+      '我打算暂停一段时间，风声不对。你也要小心。',
+    ],
+    _default:[
+      '阿南，最近练习怎么样？技术要多练。',
+      '记住叔叔的话：小心、耐心、不贪心。',
+      '这个行业，信任比金钱更值钱。',
+      '有事找我，但是不要太频繁，被人注意到不好。',
+      '你的手艺进步不少。继续努力。',
+      '最近有个大客户，要高质量的货。你准备好了吗？',
+    ],
+  },
+  trader:{
+    '市场最新消息？':[
+      '最近纸张涨价了，我进货成本也高了，理解一下。',
+      '听说工厂那边来了新机器，专门印高质量的东西...',
+      '有个外地商人在找特种材料，你感兴趣吗？',
+      '最近警察在市场转悠，你懂的，特殊货要低调一点。',
+    ],
+    '有没有特殊货？':[
+      '（压低声音）有，但是今天人多，改天来。',
+      '你是老顾客了，跟你说实话，最近进了一批好东西。',
+      '特殊货？你去找那个穿深色衣服的人，他那里有。',
+      '现在没有，过几天再来。货到了我会让人通知你。',
+    ],
+    _default:[
+      '来看看！今天到了一批上好纸张！',
+      '老顾客，给你便宜一点！',
+      '买多了有折扣，你懂的。',
+      '最近生意还好，多亏了你这样的回头客。',
+      '材料都是正品，用过的都说好。',
+      '今天人多，动作快一点。',
+    ],
+  },
+  black_market:{
+    '你认识我叔叔？':[
+      '达拉？当然认识。他说你是可以信任的人，所以我才见你。',
+      '他是老朋友了。生意做了很多年，靠得住的人。',
+      '（点头）他介绍的人，我不会亏待。',
+    ],
+    '安全线多少钱？':[
+      '安全线$250一条，变色墨水$350，合成纤维$400。都是好货。',
+      '便宜不了，这些东西进货也难。要不要？',
+      '价格公道，保真。用不好是你技术问题，不关我的事。',
+    ],
+    _default:[
+      '...说吧，要什么。',
+      '快点，这里不适合久待。',
+      '我的货，质量你放心。',
+      '（四处张望）没有警察，说吧。',
+      '价格都是固定的，不讲价。',
+      '（沉默片刻）你要的东西，明天才有。',
+    ],
+  },
+  police:{
+    '附近有什么可疑人？':[
+      '（打量你）你问这个干什么？有什么发现直接告诉我。',
+      '最近市场附近有可疑活动，我们在调查中。',
+      '举报有奖，但是要有证据，不然我们不受理。',
+      '你知道什么吗？（靠近）说出来对你有好处。',
+    ],
+    '这城市怎么样？':[
+      'Siem Muang是个好地方，只要没有犯罪分子。',
+      '最近假币案件增多，破坏了这里的声誉。',
+      '我在这里执法十年了，见过各种人。',
+      '总体还好，但是有些角落...我在盯着。',
+    ],
+    _default:[
+      '（冷眼打量）你在这里有什么事？',
+      '证件请出示。',
+      '最近盗窃案增多，市民要提高警觉。',
+      '我在例行巡逻，你继续你的事。',
+      '（若有所思地看着你）嗯...',
+      '举报有奖。如果你发现什么不对劲的，来找我。',
+    ],
+  },
+  doctor:{
+    '需要多少医药费？':[
+      '李女士的手术需要$800，越快越好，延误会影响效果。',
+      '手术本身两个小时，但是需要提前缴费，这是规定。',
+      '如果资金暂时不够，可以先缴一半，但总额不能少。',
+    ],
+    '保持健康非常重要。':[
+      '是的，规律作息，少熬夜，多喝水。',
+      '你看起来有点疲惫，要注意休息。',
+      '健康是最大的财富，钱没了可以再挣，身体垮了就麻烦了。',
+    ],
+    _default:[
+      '请问有什么不舒服？',
+      '李女士今天状态稍微好一点，但手术还是必要的。',
+      '你是家属吗？手术费的事请尽快处理。',
+      '病房很安静，请保持低声说话。',
+      '如果你有任何问题，可以随时来找我。',
+    ],
+  },
+  worker:{
+    '今天排产多少？':[
+      '老板，我已经准备好了，随时可以开工。',
+      '今天能做多少？我会尽力的。',
+      '机器状态不错，产量应该没问题。',
+      '你只管下命令，干活的事交给我。',
+    ],
+    '机器需要检修了。':[
+      '是的，那台老机器最近声音不对，最好检查一下。',
+      '我已经看了，需要换一个零件，大概要$50。',
+      '不检修的话，出了问题损失更大，建议尽快处理。',
+    ],
+    _default:[
+      '老板好！今天有什么任务？',
+      '我随时准备好开工。',
+      '工厂这边一切正常，请放心。',
+      '（擦汗）今天活儿不少，但是我能搞定。',
+      '老板，发工资的时候能不能稍微早一点？',
+      '最近生产效率提高了，主要是机器维护得好。',
+    ],
+  },
+  banker:{
+    '有什么金融服务？':[
+      '我们提供企业账户、资金托管...还有一些，嗯，不必细说的服务。',
+      '（低声）如果你需要让钱"干净"一点，我们有办法，但有手续费。',
+      '正规业务：存款、贷款。特殊业务：你懂的，私下谈。',
+    ],
+    '资金来源不必解释？':[
+      '（微笑）这是我们对VIP客户的政策。当然，要有一定规模才行。',
+      '不问来源，但是手续费会高一些。这是行规。',
+      '我们见过各种客户，什么都不奇怪。',
+    ],
+    _default:[
+      '欢迎光临国家银行，请问有什么需要？',
+      '我们的服务完全保密，请放心。',
+      '今天存款利率是2.5%，有兴趣吗？',
+      '（压低声音）如果有特殊需求，可以单独谈。',
+      '请坐，我来为您办理。',
+      '我们银行信誉第一，您的资产绝对安全。',
+    ],
+  },
+  monk:{
+    '你在这里多久了？':[
+      '贫僧在此已二十年，见过形形色色的施主来此求心安。',
+      '从我剃度那天起，这里便是我的归宿。光阴似流水。',
+      '很久了。岁月在佛像面前，不过是一瞬间。',
+    ],
+    '这附近有什么？':[
+      '古寺周围皆是净土，但施主的心是否也清净？',
+      '树木、河流、苍天。比城市更真实的东西。',
+      '施主若有空，可在此静坐片刻，比在城中奔波更有益。',
+    ],
+    _default:[
+      '阿弥陀佛。施主，请放下心中的执念。',
+      '罪孽如影随形，但悔改的心能化解一切。',
+      '心静自然凉。施主似乎有很多烦恼？',
+      '此处清净，欢迎施主常来。',
+      '每三日可在此祈祷一次，可减轻业障。',
+      '施主面露疲态，建议好好休息，莫要过度操劳。',
+      '钱财乃身外之物，施主不可太执着。',
+    ],
+  },
+  barkeep:{
+    '有没有传言？':[
+      '（擦杯子）听说警察在查一批假币，从市场方向流出来的。',
+      '最近有外地面孔在附近转悠，不像是来旅游的。',
+      '工厂那边据说换了新设备，你知道的，做什么用的。',
+      '有人在找地下买家，数额不小。你感兴趣吗？',
+    ],
+    '最近城里怎么了？':[
+      '热闹啊。白天做生意，晚上...各自有各自的生意。',
+      '假币案越来越多，警察压力很大，要小心。',
+      '有个大人物要来这里视察，最近当局很敏感。',
+    ],
+    _default:[
+      '来杯什么？今天进了好酒。',
+      '消息多的是，就看你肯不肯花钱。',
+      '这里的客人，每个人都有秘密。',
+      '（低声）最近风声紧，你最好低调一点。',
+      '我见过太多人从这里进来，然后就没有然后了。小心。',
+      '今晚人多，有什么话快说。',
+    ],
+  },
+  barkeep_indoor:{
+    '有没有特殊消息？':[
+      '（看四周）今天有警察便衣在附近，你的货暂时别动。',
+      '有人举报了市场里的可疑摊位，不是你的，但是要当心。',
+      '听说仓库主达龙的仓库B要出售了，你感兴趣吗？',
+      '消息买回来自己用，别到处说是从我这里听到的。',
+    ],
+    _default:[
+      '要喝点什么？',
+      '（打量你）第一次来？规矩先了解一下。',
+      '消息灵通，价格公道。',
+      '这里没有秘密，只有还没付钱的情报。',
+    ],
+  },
+  gangster:{
+    '今天有什么消息？':[
+      '街上有便衣警察，最近少出门。',
+      '有个新地盘可以谈，但是需要人手。',
+      '最近上面压力大，我们也要低调。',
+    ],
+    _default:[
+      '老大，有什么吩咐？',
+      '（伸懒腰）今天还算平静。',
+      '需要我做什么，说话就行。',
+      '跟着你干，我放心。',
+    ],
+  },
+  gangster_indoor:{
+    '今天有什么消息？':[
+      '听说警察在盯着市场那一带，小心点。',
+      '有个新面孔在附近问来问去，不知道是干什么的。',
+      '最近风声紧，兄弟们都低调着呢。',
+    ],
+    _default:[
+      '老大，我在这里候着。',
+      '有什么事直接说，我随时准备好。',
+      '（点头）最近安全，放心。',
+      '需要我出去盯梢吗？',
+    ],
+  },
+  police_indoor:{
+    '这里有什么规定？':[
+      '警察局内请保持安静，不得录像拍照。',
+      '有案件请走正规渠道，填写报案单。',
+      '探访被拘留者需要预约，直接进来是不行的。',
+    ],
+    _default:[
+      '你来这里有什么事？',
+      '警察局不是随便进来闲逛的地方。',
+      '有案件要报案吗？我来帮你登记。',
+      '（抬头看你）...',
+    ],
+  },
+  market_keeper:{
+    '买材料':[],// handled as shortcut
+    '买食物':[],
+    '买服装':[],
+    _default:[
+      '欢迎光临！今天有什么需要？',
+      '我们这里什么都有，材料、食物、服装，样样齐全！',
+      '老顾客！今天有新货，要不要看看？',
+      '价格实惠，质量保证！',
+      '需要什么直接说，我帮你找。',
+    ],
+  },
+  factory_boss:{
+    '最近生意怎么样？':[
+      '生意不错，就是招不到好工人，效率上不来。',
+      '成本压力大啊，原材料涨价了。',
+      '最近接了几个大单，正需要人手呢。',
+    ],
+    _default:[
+      '欢迎来工厂参观。有什么事？',
+      '这里的机器都是进口的，质量没话说。',
+      '你要工作还是要买厂？都可以谈。',
+      '工厂运转需要可靠的人，你看起来还不错。',
+    ],
+  },
+  warehouse_boss:{
+    '最近生意怎么样？':[
+      '仓库这边还行，就是租金贵，压力大。',
+      '存货进出很频繁，忙得很。',
+      '最近有几栋仓库要出手，你感兴趣吗？',
+    ],
+    _default:[
+      '这里是仓储区，你来有什么事？',
+      '仓库空间还有，需要租用的话可以谈。',
+      '工人要的话，我这里也需要人手。',
+      '你看起来像是有点本事的人，有没有兴趣合作？',
+    ],
+  },
+  passerby:{
+    '这附近有什么好玩的？':[
+      '古寺不错，就是要走一段路。',
+      '市场里东西多，去看看吧。',
+      '我也是外地来的，不太熟悉。',
+      '河边风景挺好，傍晚去走走。',
+    ],
+    _default:[
+      '你好！',
+      '天气真热啊。',
+      '这城市越来越繁华了。',
+      '我在赶时间，不聊了。',
+      '（友好地点点头）',
+      '今天市场有没有什么好货？',
+      '哎，生活不容易啊。',
+      '你是新来这里的吗？',
+    ],
+  },
+};
+
+function getRuleReply(role,id,msg){
+  const db=RULE_DB[role]||RULE_DB[id];
+  if(!db) return pick(['...','嗯。','（沉默）','没什么好说的。','你问这个干什么？']);
+  // Try exact message match first
+  const exact=db[msg];
+  if(exact&&exact.length>0) return pick(exact);
+  // Fall back to role default
+  const def=db._default;
+  if(def&&def.length>0) return pick(def);
+  // Generic fallback
+  const generic=['嗯。','...','（点点头）','没什么特别的。','你问这个干什么？','随便吧。','是这样的。','我也不太清楚。'];
+  return pick(generic);
+}
+
+// Uncle relationship lines — shown after first teach
+const UNCLE_AFTER_TEACH=[
+  '达拉叔叔拍拍你的肩膀：「小时候你跌倒，是叔叔扶你起来的。现在叔叔推你一把，你要自己走远。」',
+  '「你爸爸走得早，叔叔答应过他要照顾你们母子。这门技术，算是叔叔给你的传家宝。」',
+  '「阿南，叔叔老了，做不了多久了。你学会了，以后要懂得保护自己，也要保护你妈。」',
+  '「你知道吗，我年轻时也是从这里起步的。只是那时候更危险，没有人教我。你比叔叔幸运。」',
+  '达拉叔叔沉默片刻：「多去看看你妈妈。钱再重要，家人更重要。」',
+  '「记住，这行要稳，不要急。急的人都进去了。叔叔在外面这么多年，靠的就是两个字：耐心。」',
+  '「有时候我也后悔走上这条路。但是没办法，生活逼的。你还年轻，如果有机会，找条正路走。」',
+  '达拉叔叔看了看窗外：「你妈妈的病快好了吗？她要是知道钱的来路，会伤心的。」',
+];
+function handleUncleTeach(){
+  closeDlg();
+  if(!G.sf.uncle1){
+    // First time — teach and give EXP
+    G.sf.uncle1=true;
+    completeQuest('q2');
+    const bonus=20;addExp(bonus);
+    notify('📚 叔叔达拉传授了基础技巧！经验+'+bonus,'g');
+    setTimeout(()=>notify('叔叔：「来，跟我去工作台，我教你第一步...」',''),1200);
+  } else {
+    // After first teach — show rotating relationship dialogue
+    const line=UNCLE_AFTER_TEACH[G._uncleLineIdx||0];
+    G._uncleLineIdx=((G._uncleLineIdx||0)+1)%UNCLE_AFTER_TEACH.length;
+    // Show in dialog box briefly
+    const dlgEl=document.getElementById('dlg');
+    if(dlgEl){
+      document.getElementById('dlgtxt').textContent=line;
+      document.getElementById('dlgch').innerHTML='<button class="dc" onclick="closeDlg()">（点击关闭）</button>';
+      dlgEl.style.display='block';
+    }
+  }
+}
+function openBMPanel(){
+  openPanel('custom');document.getElementById('ptitle').textContent='🕵️ 黑市';
+  const bm=[{icon:'🔒',n:'安全线 x2',p:250,id:'strip',cnt:2},{icon:'🎨',n:'变色墨水',p:350,id:'cinq',cnt:1},{icon:'🧪',n:'合成纤维',p:400,id:'fiber',cnt:1},{icon:'💊',n:'腐蚀剂',p:180,id:'acid',cnt:1}];
+  let h='<div style="color:#555;font-size:11px;font-style:italic;margin-bottom:14px">... 只对可信赖的人 ...</div>';
+  bm.forEach((it,i)=>{
+    h+=`<div class="scard" onclick="buyBM(${i})" style="border-color:rgba(249,115,22,.25)"><span style="font-size:26px">${it.icon}</span><div style="flex:1"><div style="color:#ddd;font-size:13px">${it.n}</div></div><div style="color:#ffd700">$${it.p}</div></div>`;
+  });
+  document.getElementById('pcontent').innerHTML=h;
+  window.buyBM=function(i){const it=bm[i];if(G.money<it.p){notify('钱不够！','w');return;}G.money-=it.p;giveItem(it.id,it.icon,it.n,it.cnt);notify(`黑市购入：${it.n}`);updateHUD();openBMPanel();};
+}
+
+// ============================================================
+// SLEEP
+// ============================================================
+function trySleep(){
+  const nearHome=Math.hypot(G.ppos.x,G.ppos.z+37)<8;
+  const inHome=G.inRoom&&G.curRoom?.int==='home';
+  if(!nearHome&&!inHome){notify('需要在家里才能睡觉！','w');return;}
+  const ov=document.getElementById('sleepov');ov.style.display='flex';G.sleeping=true;
+  setTimeout(()=>ov.classList.add('on'),80);
+  setTimeout(()=>{
+    G.st=G.maxSt;G.timeMin+=480;if(G.timeMin>=1440){G.timeMin-=1440;G.day++;}G.heat=Math.max(0,G.heat-10);
+    // Pay gang salaries
+    const sal=G.gang.reduce((a,m)=>a+m.salary,0);
+    if(sal>0){G.money=Math.max(0,G.money-sal);notify(`💸 支付帮派日薪 $${sal}`);}
+    // Auto produce if active
+    if(G.autoProducing&&G.ownedBlds.includes('factory')){
+      const avail=RECIPES.filter(r=>G.skills[r.sk]&&hasItem('paper',r.req.paper)&&hasItem('ink',r.req.ink));
+      if(avail.length){const r=avail[0];deductItem('paper',r.req.paper);deductItem('ink',r.req.ink);G.money+=r.reward;G.heat=Math.min(G.maxHeat,G.heat+r.heat);const ex=G.fakeGoods.find(g=>g.gn===r.gn);if(ex)ex.cnt++;else G.fakeGoods.push({gn:r.gn,icon:r.icon,cnt:1,val:r.reward});notify(`🏭 自动生产完成：${r.n} +$${r.reward}`);}
+    }
+    updateHUD();updateTimeHUD();ov.classList.remove('on');
+    setTimeout(()=>{ov.style.display='none';G.sleeping=false;const sleepH=Math.floor(G.timeMin/60)%24;const sleepM=G.timeMin%60;notify(`😴 睡了8小时，精力满满！现在是 ${String(sleepH).padStart(2,'0')}:${String(sleepM).padStart(2,'0')}`,'i');},1200);
+  },3000);
+}
+
+
+// ============================================================
+// WORK SYSTEM
+// ============================================================
+let workActive=false,workTimer=0,workDuration=0,workReward=0,workStCost=0,workBld=null;
+
+function startWork(bld){
+  if(workActive){notify('已经在工作中！','w');return;}
+  if(!bld.canWork){notify('这里无法打工','w');return;}
+  // Stamina cost reduction based on skill level
+  let stCost=bld.workStCost;
+  if(G.skills.midForgery) stCost=Math.floor(stCost*0.85);
+  if(G.skills.advForgery) stCost=Math.floor(stCost*0.7);
+  stCost=Math.max(30,stCost);// minimum 30
+  if(G.st<stCost){notify(`体力不足！需要至少${stCost}体力才能打工`,'w');return;}
+  const durSecs=bld.workHours; // real seconds (1 sec = 1 game minute; workHours=game-hours=real-seconds*60)
+  // 5 game hours = 5*60 game-minutes = 300 real seconds... that's too long.
+  // Design: 5 game hours locks for 15 real seconds (as specified)
+  const realSecs=15; // always 15 real seconds per job
+  workActive=true;workTimer=0;workDuration=realSecs;
+  workReward=bld.workPay;workStCost=stCost;workBld=bld;
+  G.st=Math.max(0,G.st-stCost);
+  // Advance game time by workHours*60 minutes
+  G.timeMin+=bld.workHours*60;
+  if(G.timeMin>=1440){G.timeMin-=1440;G.day++;}
+  updateTimeHUD();updateHUD();
+  // Reduce heat by working (legitimate-looking activity)
+  G.heat=Math.max(0,G.heat-8);
+  showWorkOverlay(bld,realSecs);
+  notify(`开始在 ${bld.n} 打工，${bld.workHours}小时，薪资 $${bld.workPay}`,'i');
+}
+
+function showWorkOverlay(bld,secs){
+  let overlay=document.getElementById('work-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='work-overlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,10,.85);z-index:75;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;pointer-events:none;';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display='flex';
+  const updateOv=()=>{
+    if(!workActive){overlay.style.display='none';return;}
+    const pct=Math.floor((workTimer/workDuration)*100);
+    const remaining=Math.ceil(workDuration-workTimer);
+    overlay.innerHTML=`
+      <div style="font-size:36px;">💪</div>
+      <div style="color:#ffd700;font-size:18px;">${bld.n}</div>
+      <div style="color:#aaa;font-size:13px;">正在打工... ${bld.workHours}小时</div>
+      <div style="width:280px;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:6px;transition:width .5s;"></div>
+      </div>
+      <div style="color:#4ade80;font-size:13px;">薪资: $${bld.workPay} | 剩余 ${remaining}秒</div>
+      <div style="color:#555;font-size:11px;">体力消耗: -${workStCost}</div>`;
+    if(workActive) requestAnimationFrame(updateOv);
+  };
+  updateOv();
+}
+
+function tickWork(dt){
+  if(!workActive) return;
+  workTimer+=dt;
+  if(workTimer>=workDuration){
+    workActive=false;
+    G.money+=workReward;
+    const ov=document.getElementById('work-overlay');
+    if(ov) ov.style.display='none';
+    notify(`✅ 打工完成！获得 $${workReward}`,'g');
+    updateHUD();
+    completeQuest('q3');// counts as earning
+  }
+}
+
+// ============================================================
+// ERRAND SYSTEM (market delivery quests)
+// ============================================================
+const ERRANDS=[
+  {id:'e1',from:'市场商人老王',to:'医院医生',toId:'doctor',item:'📦 医疗物资',pay:30,desc:'把医疗物资送到医院'},
+  {id:'e2',from:'市场商人老王',to:'警察队长老李',toId:'police',item:'📋 市场报告',pay:25,desc:'把市场报告送给警察局'},
+  {id:'e3',from:'市场商人老王',to:'银行员工黛维',toId:'banker',item:'💰 货款文件',pay:40,desc:'把货款文件送到银行'},
+  {id:'e4',from:'市场商人老王',to:'工人阿明达',toId:'worker',item:'🔧 零件',pay:20,desc:'把零件送到工厂工人'},
+  {id:'e5',from:'市场商人老王',to:'叔叔达拉',toId:'uncle',item:'📜 秘密文件',pay:60,desc:'把文件悄悄送给叔叔（勿让人看见）'},
+];
+let activeErrand=null,errandCarrying=false;
+
+function startErrand(){
+  if(activeErrand){
+    notify('先完成当前任务！','w');return;
+  }
+  const available=ERRANDS[Math.floor(Math.random()*ERRANDS.length)];
+  activeErrand={...available};
+  errandCarrying=true;
+  notify(`📦 跑腿任务：${available.desc}（报酬 $${available.pay}）`,'i');
+  // Update quest prompt in minimap area
+  const qEl=document.getElementById('qitems');
+  if(qEl){
+    const div=document.createElement('div');
+    div.className='qi';div.id='errand-qi';
+    div.textContent='📦 送'+available.item+'给'+available.to;
+    qEl.prepend(div);
+  }
+  updateHintForErrand();
+}
+
+function updateHintForErrand(){
+  if(!activeErrand||!errandCarrying) return;
+  // Update the interact hint if near target NPC
+  const targetNPC=NPCS.find(n=>n.userData.id===activeErrand.toId);
+  if(targetNPC){
+    const d=Math.hypot(targetNPC.position.x-G.ppos.x,targetNPC.position.z-G.ppos.z);
+    if(d<4){
+      document.getElementById('ihintw').textContent='[ E ] 交付 '+activeErrand.item+' 给 '+activeErrand.to;
+      document.getElementById('ihintw').style.display='block';
+    }
+  }
+}
+
+function tryDeliverErrand(npcId){
+  if(!activeErrand||!errandCarrying) return false;
+  if(npcId!==activeErrand.toId) return false;
+  G.money+=activeErrand.pay;
+  notify(`✅ 跑腿完成！交付 ${activeErrand.item}，获得 $${activeErrand.pay}`,'g');
+  errandCarrying=false;
+  const qEl=document.getElementById('errand-qi');
+  if(qEl) qEl.remove();
+  activeErrand=null;
+  updateHUD();
+  return true;
+}
+
+// Open work panel for a building
+function openWorkPanel(bld){
+  openPanel('custom');
+  document.getElementById('ptitle').textContent='💼 '+bld.n;
+  const owned=bld.bought||G.ownedBlds.includes(bld.id);
+  let stCost=bld.workStCost;
+  if(G.skills.midForgery) stCost=Math.floor(stCost*0.85);
+  if(G.skills.advForgery) stCost=Math.floor(stCost*0.7);
+  stCost=Math.max(30,stCost);
+  let h=`<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;margin-bottom:12px;">
+    <div style="color:#ffd700;font-size:14px;margin-bottom:8px;">📋 建筑信息</div>
+    <div style="color:#aaa;font-size:12px;line-height:1.8;">所有者: ${owned?'<span style="color:#4ade80">你</span>':bld.own}<br>
+    工时: ${bld.workHours} 游戏小时（15秒）<br>薪资: $${bld.workPay}<br>体力消耗: ${stCost}（技能越高越少，最低30）</div>
+  </div>`;
+  if(bld.canWork){
+    h+=`<button onclick="closeAll();startWork(BLDS.find(b=>b.id==='${bld.id}'))" style="width:100%;background:rgba(74,222,128,.1);border:1px solid #4ade80;color:#4ade80;padding:11px;border-radius:9px;cursor:pointer;font-size:14px;margin-bottom:10px;pointer-events:all;">💪 开始打工</button>`;
+  }
+  if(!owned&&bld.price>0){
+    h+=`<button onclick="buyBldg('${bld.id}',${bld.price})" style="width:100%;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.4);color:#ffd700;padding:11px;border-radius:9px;cursor:pointer;font-size:14px;pointer-events:all;">🏗️ 购买此建筑 $${bld.price.toLocaleString()}</button>`;
+  } else if(owned){
+    h+=`<div style="color:#60a5fa;font-size:12px;text-align:center;padding:8px;">✓ 你拥有此建筑</div>`;
+  }
+  document.getElementById('pcontent').innerHTML=h;
+}
+// ============================================================
+// INVESTIGATION SYSTEM
+// ============================================================
+function updateInvestigation(){
+  const lv=G.investLevel;
+  const iv=document.getElementById('invest');const ib=document.getElementById('investbar');
+  const wd=document.getElementById('wanted');const wl=document.getElementById('wantedlvl');
+  if(lv===0){iv.classList.remove('active');ib.classList.remove('active');wd.style.display='none';}
+  else{
+    iv.classList.add('active');ib.classList.add('active');
+    wd.style.display='block';document.getElementById('wantedtxt').textContent=['⚠ 轻度监控','⚠ 调查中','🚨 高度怀疑','🚔 即将逮捕'][lv-1]||'🚨';
+    wl.textContent='警戒等级: '+lv+'/4';
+    if(lv>=4){arrestPlayer();}
+  }
+  // Update ticker
+  if(lv>=2) document.getElementById('ticktxt').textContent='🚨 突发：警方正对假币案展开重点调查！关闭多处可疑据点 || 情报显示有主要嫌疑人 || 请市民举报可疑活动 ||';
+}
+function arrestPlayer(){
+  const fine=Math.floor(G.money*.5);G.money=Math.max(0,G.money-fine);
+  G.heat=20;G.investLevel=0;
+  notify(`🚔 你被逮捕！罚款 $${fine}。你逃脱了！热度重置。`,'d');
+  // Teleport player home
+  PLR.position.set(0,0,-30);G.ppos.copy(PLR.position);updateInvestigation();
+}
+
+// ============================================================
+// TIME & SKY
+// ============================================================
+let timeTick=0;
+function updateTimeHUD(){
+  const h=Math.floor(G.timeMin/60)%24,m=G.timeMin%60;
+  document.getElementById('tv').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  document.getElementById('dv').textContent=`第${G.day}天`;
+  const t=(h-6)/18;const br=Math.max(0,Math.min(1,Math.sin(t*Math.PI)));
+  S.background.setRGB(.2+br*.32,.44+br*.38,.62+br*.24);S.fog.color.copy(S.background);
+  sun.intensity=.1+br*1.35;ambL.intensity=.28+br*.45;
+  // Night: lamp glow stronger
+  S.children.forEach(c=>{if(c.isPointLight&&c.color.r>.9&&c.color.g>.9) c.intensity=.3+(.7-br)*.7;});
+}
+function tickTime(dt){
+  if(G.sleeping) return;
+  timeTick+=dt;if(timeTick>1){timeTick=0;G.timeMin+=1;if(G.timeMin>=1440){G.timeMin=0;G.day++;}updateTimeHUD();}
+  // investigation passive cooldown
+  G.investTimer+=dt;if(G.investTimer>120){G.investTimer=0;if(G.investLevel>0&&G.heat<40){G.investLevel--;updateInvestigation();notify('📉 调查等级降低','i');}}
+}
+
+// ============================================================
+// STORAGE CHEST
+// ============================================================
+function openStoragePanel(){
+  if(G.plocked) document.exitPointerLock();
+  openPanel('custom');
+  document.getElementById('ptitle').textContent='📦 储物箱';
+  let h=`<div style="display:flex;gap:10px;margin-bottom:14px;">
+    <div style="flex:1;background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:9px;padding:10px;text-align:center;">
+      <div style="color:#ffd700;font-size:18px;font-weight:700;">$${G.money}</div><div style="color:#888;font-size:10px;">身上现金</div></div>
+    <div style="flex:1;background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:9px;padding:10px;text-align:center;">
+      <div style="color:#4ade80;font-size:18px;font-weight:700;">$${G.storage.money}</div><div style="color:#888;font-size:10px;">箱内存款</div></div>
+  </div>`;
+  h+=`<div style="display:flex;gap:8px;margin-bottom:14px;">
+    <input id="stor-amt" type="number" min="0" max="${G.money}" placeholder="金额" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:8px;color:#fff;font-size:13px;" />
+    <button onclick="storDeposit()" style="background:rgba(74,222,128,.1);border:1px solid #4ade80;color:#4ade80;padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12px;pointer-events:all;">存入</button>
+    <button onclick="storWithdraw()" style="background:rgba(96,165,250,.1);border:1px solid #60a5fa;color:#60a5fa;padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12px;pointer-events:all;">取出</button>
+  </div>`;
+  if(G.storage.items.length){
+    h+=`<div style="color:#aaa;font-size:12px;margin-bottom:7px;">箱内物品</div>`;
+    G.storage.items.forEach((it,i)=>{
+      h+=`<div style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid rgba(255,255,255,.09);border-radius:8px;margin-bottom:5px;">
+        <span style="font-size:20px;">${it.icon}</span>
+        <div style="flex:1;color:#ddd;font-size:12px;">${it.n} x${it.cnt}</div>
+        <button onclick="storTakeItem(${i})" style="background:rgba(96,165,250,.1);border:1px solid #60a5fa;color:#60a5fa;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;pointer-events:all;">取出</button>
+      </div>`;
+    });
+  } else {
+    h+=`<div style="color:#444;font-size:12px;text-align:center;padding:12px;">箱内是空的</div>`;
+  }
+  // Store inventory items
+  const storables=G.inventory.filter(it=>it&&it.id!=='hands'&&it.cnt>0);
+  if(storables.length){
+    h+=`<div style="color:#aaa;font-size:12px;margin-top:12px;margin-bottom:7px;">存入物品</div>`;
+    storables.forEach((it,i)=>{
+      const idx=G.inventory.indexOf(it);
+      h+=`<div style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid rgba(255,255,255,.09);border-radius:8px;margin-bottom:5px;">
+        <span style="font-size:20px;">${it.icon}</span>
+        <div style="flex:1;color:#ddd;font-size:12px;">${it.n} x${it.cnt}</div>
+        <button onclick="storStoreItem(${idx})" style="background:rgba(249,115,22,.1);border:1px solid #f97316;color:#f97316;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;pointer-events:all;">存入</button>
+      </div>`;
+    });
+  }
+  document.getElementById('pcontent').innerHTML=h;
+}
+window.storDeposit=function(){
+  const amt=parseInt(document.getElementById('stor-amt')?.value)||0;
+  if(amt<=0||amt>G.money){notify('金额无效！','w');return;}
+  G.money-=amt;G.storage.money+=amt;notify(`存入 $${amt}`,'i');updateHUD();openStoragePanel();
+};
+window.storWithdraw=function(){
+  const amt=parseInt(document.getElementById('stor-amt')?.value)||0;
+  if(amt<=0||amt>G.storage.money){notify('箱内存款不足！','w');return;}
+  G.storage.money-=amt;G.money+=amt;notify(`取出 $${amt}`,'i');updateHUD();openStoragePanel();
+};
+window.storStoreItem=function(idx){
+  const it=G.inventory[idx];if(!it) return;
+  const ex=G.storage.items.find(s=>s.id===it.id);
+  if(ex) ex.cnt+=it.cnt;else G.storage.items.push({...it});
+  G.inventory[idx]=null;notify(`存入 ${it.icon} ${it.n}`);openStoragePanel();
+};
+window.storTakeItem=function(si){
+  const it=G.storage.items[si];if(!it) return;
+  const slot=G.inventory.findIndex(i=>!i);
+  if(slot<0){notify('背包已满！','w');return;}
+  G.inventory[slot]={...it};G.storage.items.splice(si,1);
+  notify(`取出 ${it.icon} ${it.n}`);updateHUD();openStoragePanel();
+};
+
+// ============================================================
+// EXPERIENCE & SKILL UNLOCK SYSTEM
+// ============================================================
+const EXP_THRESHOLDS={midForgery:50,advForgery:150,streetLaunder:30,finance1:80,finance2:200,autoPress:300,gangRecruit:60};
+const SKILL_NAMES={basicForgery:'基础伪造',midForgery:'中级伪造',advForgery:'高级伪造',streetLaunder:'街头洗钱',finance1:'金融初级',finance2:'金融高级',autoPress:'自动化生产',gangRecruit:'帮派招募'};
+
+function addExp(amount){
+  G.exp+=amount;
+  updateExpHUD();
+  // Check unlocks
+  Object.keys(EXP_THRESHOLDS).forEach(sk=>{
+    if(!G.skills[sk]&&G.exp>=EXP_THRESHOLDS[sk]){
+      G.skills[sk]=true;
+      notify('🌟 经验解锁技能：'+SKILL_NAMES[sk]+'！','g');
+    }
+  });
+}
+function updateExpHUD(){
+  const el=document.getElementById('spv');
+  if(el) el.textContent='EXP:'+G.exp;
+}
+function getExpLabel(){
+  const nxt=Object.entries(EXP_THRESHOLDS).filter(([k])=>!G.skills[k]).sort((a,b)=>a[1]-b[1])[0];
+  if(!nxt) return '全部解锁！';
+  return `下一解锁: ${SKILL_NAMES[nxt[0]]}(${nxt[1]}EXP)`;
+}
+
+// ============================================================
+// FULL MAP PANEL
+// ============================================================
+function openMapPanel(){
+  if(G.plocked) document.exitPointerLock();
+  openPanel('custom');
+  document.getElementById('ptitle').textContent='🗺️ Siem Muang 地图';
+  const pcontent=document.getElementById('pcontent');
+  // Draw SVG map
+  const svgW=460,svgH=400;
+  const sc=svgW/220;// world is ~-90 to 90 = 180 units, fit in svgW with margin
+  const cx=(x)=>(x+95)*sc;
+  const cz=(z)=>(z+90)*sc;
+  let svg=`<svg width="${svgW}" height="${svgH}" style="background:#1a2a1a;border-radius:10px;display:block;">`;
+  // Water border
+  svg+=`<rect x="0" y="0" width="${svgW}" height="${svgH}" fill="#1a3a5a" opacity=".6" rx="10"/>`;
+  // Land
+  svg+=`<rect x="${cx(-90)}" y="${cz(-90)}" width="${(180)*sc}" height="${(180)*sc}" fill="#3a5a2a" rx="4"/>`;
+  // Roads
+  svg+=`<line x1="${cx(-90)}" y1="${cz(0)}" x2="${cx(90)}" y2="${cz(0)}" stroke="#555" stroke-width="4"/>`;
+  svg+=`<line x1="${cx(0)}" y1="${cz(-90)}" x2="${cx(0)}" y2="${cz(90)}" stroke="#555" stroke-width="4"/>`;
+  // Buildings
+  const bColors={home:'#d08860',factory:'#7a8a6a',factory2:'#8a7a6a',wh1:'#5577aa',wh2:'#5577aa',wh3:'#5577aa',wh4:'#5577aa',market:'#d4a855',bank:'#e0d8b8',hospital:'#f0f0f0',police:'#3355aa',bar:'#3a2a1a'};
+  BLDS.forEach(b=>{
+    if(!b.w) return;
+    const bx=cx(b.x-b.w/2),by=cz(b.z-b.d/2),bw=b.w*sc,bd=b.d*sc;
+    const owned=b.bought||G.ownedBlds.includes(b.id);
+    svg+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bd}" fill="${owned?'#4ade80':bColors[b.id]||'#888'}" opacity=".9" rx="2"/>`;
+    svg+=`<text x="${cx(b.x)}" y="${cz(b.z)+3}" text-anchor="middle" font-size="7" fill="rgba(255,255,255,.8)">${b.n.slice(0,5)}</text>`;
+  });
+  // NPCs (dots)
+  NPCS.forEach(n=>{
+    svg+=`<circle cx="${cx(n.position.x)}" cy="${cz(n.position.z)}" r="3" fill="#ffd700" opacity=".8"/>`;
+  });
+  // Player
+  svg+=`<circle cx="${cx(G.ppos.x)}" cy="${cz(G.ppos.z)}" r="5" fill="#00ff88" stroke="#fff" stroke-width="1.5"/>`;
+  svg+=`<text x="${cx(G.ppos.x)}" y="${cz(G.ppos.z)-7}" text-anchor="middle" font-size="8" fill="#00ff88">你</text>`;
+  // River
+  svg+=`<rect x="${cx(-64)}" y="${cz(-90)}" width="${7*sc}" height="${180*sc}" fill="#2255aa" opacity=".7"/>`;
+  svg+='</svg>';
+  svg+=`<div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#888;">
+    <span>🟢 绿色=你拥有</span><span>🟡 黄点=NPC</span><span>🔵 蓝=你的位置</span>
+    <span>当前位置: (${Math.floor(G.ppos.x)}, ${Math.floor(G.ppos.z)})</span>
+  </div>`;
+  pcontent.innerHTML=svg;
+}
+
+// ============================================================
+// HUD
+// ============================================================
+
+// ============================================================
+// NOTIFY
+// ============================================================
+function notify(msg,type='',duration=3200){
+  const d=document.createElement('div');
+  d.className='nf '+(type||'');
+  // Add icon prefix by type
+  const icons={w:'⚠ ',d:'🚨 ',i:'💡 ',g:'✅ '};
+  d.textContent=(icons[type]||'')+msg;
+  const container=document.getElementById('notifs');
+  if(container){
+    container.appendChild(d);
+    setTimeout(()=>{d.style.animation='nfa .4s forwards reverse';setTimeout(()=>d.remove(),400);},duration);
+  }
+  // Play sound
+  playSound(type);
+}
+
+function updateHUD(){
+  const sp=G.st/G.maxSt*100;
+  document.getElementById('sf').style.width=sp+'%';document.getElementById('sf').style.background=sp<25?'#ef4444':sp<50?'#f97316':'#4ade80';
+  document.getElementById('sv').textContent=Math.floor(G.st);
+  document.getElementById('hf').style.width=(G.heat/G.maxHeat*100)+'%';document.getElementById('hv').textContent=Math.floor(G.heat);
+  document.getElementById('mv').textContent='$'+G.money.toLocaleString();document.getElementById('spv').textContent=G.sp+'点';
+  updateHotbar();
+}
+function updateHotbar(){
+  G.inventory.forEach((it,i)=>{
+    const sl=document.getElementById('sl'+i);if(!sl) return;
+    sl.classList.toggle('on',i===G.activeSlot);
+    if(i>0){const ico=document.getElementById('i'+i),cnt=document.getElementById('c'+i);if(ico) ico.textContent=it?it.icon:'';if(cnt) cnt.textContent=it&&it.cnt>1?it.cnt:'';}
+  });
+}
+
+// ============================================================
+// MINIMAP
+// ============================================================
+const mmcv=document.getElementById('mm'),mmx=mmcv.getContext('2d');
+function drawMM(){
+  mmx.clearRect(0,0,115,115);
+  mmx.fillStyle='#121e10';mmx.beginPath();mmx.arc(57,57,57,0,Math.PI*2);mmx.fill();
+  mmx.save();mmx.beginPath();mmx.arc(57,57,57,0,Math.PI*2);mmx.clip();
+  const sc=.5,cx=57-G.ppos.x*sc,cy=57-G.ppos.z*sc;
+  mmx.strokeStyle='#4a4845';mmx.lineWidth=6;
+  mmx.beginPath();mmx.moveTo(cx-110,cy);mmx.lineTo(cx+110,cy);mmx.stroke();
+  mmx.beginPath();mmx.moveTo(cx,cy-110);mmx.lineTo(cx,cy+110);mmx.stroke();
+  // river
+  mmx.fillStyle='rgba(51,102,153,.7)';mmx.fillRect(cx-66,cy-110,6,220);
+  BLDS.forEach(b=>{if(!b.w) return;
+    const c=b.bought||G.ownedBlds.includes(b.id)?'#4ade80':'#'+b.col.toString(16).padStart(6,'0');
+    mmx.fillStyle=c;mmx.globalAlpha=.75;mmx.fillRect(cx+b.x*sc-b.w*sc/2,cy+b.z*sc-b.d*sc/2,b.w*sc,b.d*sc);mmx.globalAlpha=1;
+  });
+  NPCS.forEach(n=>{mmx.fillStyle=n.userData.role==='police'?'#4169E1':'#ffd700';mmx.beginPath();mmx.arc(cx+n.position.x*sc,cy+n.position.z*sc,2.5,0,Math.PI*2);mmx.fill();});
+  mmx.fillStyle='#00ff88';mmx.beginPath();mmx.arc(cx+G.ppos.x*sc,cy+G.ppos.z*sc,4.5,0,Math.PI*2);mmx.fill();
+  const ang=G.pyaw+Math.PI;
+  mmx.strokeStyle='#00ff88';mmx.lineWidth=1.5;mmx.beginPath();mmx.moveTo(cx+G.ppos.x*sc,cy+G.ppos.z*sc);mmx.lineTo(cx+G.ppos.x*sc+Math.sin(ang)*8,cy+G.ppos.z*sc-Math.cos(ang)*8);mmx.stroke();
+  mmx.restore();
+  mmx.strokeStyle='rgba(255,255,255,.22)';mmx.lineWidth=1.5;mmx.beginPath();mmx.arc(57,57,56,0,Math.PI*2);mmx.stroke();
+}
+
+// ============================================================
+// HEAT CHECK
+// ============================================================
+function checkHeat(dt){
+  // Heat only cools via working, praying, or banking (not passively)
+  // Accountant gang member provides slight passive cooling
+  if(G.gang.find(m=>m.role==='accountant')) G.heat=Math.max(0,G.heat-0.015);
+  if(G.heat>80&&Math.random()<.003){
+    notify('🚨 警察注意力增加！','d');
+    const pol=NPCS.find(n=>n.userData.role==='police');
+    if(pol){pol.userData.bx=G.ppos.x+8;pol.userData.bz=G.ppos.z+8;}
+    G.investLevel=Math.min(4,G.investLevel+1);updateInvestigation();
+  }
+  if(G.heat>=100){G.heat=70;G.money=Math.max(0,G.money-200);notify('🚔 被发现！损失$200！','d');G.investLevel=Math.min(4,G.investLevel+1);updateInvestigation();}
+  applyGangEffects(dt);
+}
+
+// ============================================================
+// AUTO PRODUCTION TICK
+// ============================================================
+function tickAutoProd(dt){
+  if(!G.autoProducing||!G.ownedBlds.includes('factory')) return;
+  G.autoProdTimer+=dt;
+  if(G.autoProdTimer>=20){
+    G.autoProdTimer=0;
+    const avail=RECIPES.filter(r=>G.skills[r.sk]&&(r.req.paper===0||hasItem('paper',r.req.paper))&&hasItem('ink',r.req.ink));
+    if(avail.length){
+      const r=avail[0];
+      if(r.req.paper>0) deductItem('paper',r.req.paper);deductItem('ink',r.req.ink);
+      G.money+=r.reward;G.heat=Math.min(G.maxHeat,G.heat+r.heat);G.totalMade++;
+      const ex=G.fakeGoods.find(g=>g.gn===r.gn);if(ex)ex.cnt++;else G.fakeGoods.push({gn:r.gn,icon:r.icon,cnt:1,val:r.reward});
+      notify(`🏭 自动生产：${r.n} +$${r.reward}`,'i');updateHUD();
+    } else {G.autoProducing=false;notify('⚠ 材料不足，自动生产已暂停','w');}
+  }
+}
+
+// ============================================================
+// STORY SLIDES
+// ============================================================
+const STORY=[
+  {n:'序章',t:'Siem Muang--一个隐藏在东南亚热带雨林边的虚构城市。\n\n这里充斥着贫富分化、权钱交易与灰色地带。\n\n阿南，22岁，一个普通的年轻人，即将面临人生中最艰难的选择。'},
+  {n:'阿南',t:'「妈妈，你放心，我会想办法的。」\n\n母亲索碧亚住在医院，需要$800的手术费。\n\n合法工作无法及时凑齐--叔叔达拉今天带来了一个提议...'},
+  {n:'叔叔达拉',t:'「阿南，来，叔叔带你去工坊。那里有一台印刷机。」\n\n「只要小心一点，没人会知道的...」\n\n就这样，阿南踏上了一条危险的道路。\n\n他能在崩溃前拯救母亲索碧亚吗？'},
+];
+let storyIdx=0;
+document.getElementById('storyt').textContent=STORY[0].t;
+document.getElementById('storybtn').onclick=()=>{
+  storyIdx++;
+  if(storyIdx>=STORY.length){document.getElementById('story').style.display='none';safePointerLock(cv);return;}
+  document.getElementById('storyn').textContent=STORY[storyIdx].n;
+  document.getElementById('storyt').textContent=STORY[storyIdx].t;
+};
+
+// ============================================================
+// AUDIO SYSTEM (Web Audio API - no external files needed)
+// ============================================================
+let _audioCtx=null;
+function getAudioCtx(){
+  if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_audioCtx.state==='suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playTone(freq,dur,type='sine',vol=0.18,detune=0){
+  try{
+    const ctx=getAudioCtx();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type=type;osc.frequency.value=freq;osc.detune.value=detune;
+    gain.gain.setValueAtTime(vol,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+
+function playChord(freqs,dur,type='sine',vol=0.12){
+  freqs.forEach((f,i)=>setTimeout(()=>playTone(f,dur,type,vol),i*30));
+}
+
+function playSound(type){
+  try{
+    if(type==='g'){// success - ascending chime
+      playChord([523,659,784],0.3,'sine',0.15);
+      setTimeout(()=>playTone(1047,0.4,'sine',0.1),120);
+    } else if(type==='d'){// danger - low buzz
+      playTone(80,0.15,'sawtooth',0.2);
+      setTimeout(()=>playTone(60,0.3,'sawtooth',0.15),100);
+    } else if(type==='w'){// warning - mid beep
+      playTone(440,0.1,'square',0.1);
+      setTimeout(()=>playTone(330,0.15,'square',0.08),120);
+    } else if(type==='i'){// info - soft ping
+      playTone(880,0.15,'sine',0.08);
+    } else {// default - neutral click
+      playTone(660,0.08,'sine',0.06);
+    }
+  }catch(e){}
+}
+
+// Specific sounds
+function playForgeClick(){
+  try{const ctx=getAudioCtx();const b=ctx.createOscillator();const g=ctx.createGain();b.connect(g);g.connect(ctx.destination);b.type='square';b.frequency.setValueAtTime(200,ctx.currentTime);b.frequency.exponentialRampToValueAtTime(80,ctx.currentTime+0.08);g.gain.setValueAtTime(0.12,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.08);b.start();b.stop(ctx.currentTime+0.08);}catch(e){}
+}
+function playForgeSuccess(){playChord([392,523,659,784],0.5,'sine',0.12);}
+function playForgeFail(){
+  try{const ctx=getAudioCtx();[0,0.1,0.2].forEach(t=>{const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sawtooth';o.frequency.value=120-t*30;g.gain.setValueAtTime(0.15,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.25);});}catch(e){}
+}
+function playStepDone(){playTone(784,0.12,'sine',0.1);setTimeout(()=>playTone(1047,0.18,'sine',0.08),80);}
+function playSliderMiss(){playTone(200,0.08,'square',0.1);}
+function playSliderHit(){playTone(600,0.1,'sine',0.1);setTimeout(()=>playTone(800,0.1,'sine',0.08),60);}
+function playFootstep(){try{const ctx=getAudioCtx();const b=ctx.createOscillator();const g=ctx.createGain();b.connect(g);g.connect(ctx.destination);b.type='sine';b.frequency.value=80+Math.random()*20;g.gain.setValueAtTime(0.05,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);b.start();b.stop(ctx.currentTime+0.07);}catch(e){}}
+
+// Ambient music - looping Southeast Asian-ish generative music
+let _ambPlaying=false,_ambNodes=[];
+function startAmbientMusic(){
+  if(_ambPlaying) return;
+  _ambPlaying=true;
+  playAmbientLoop();
+}
+function stopAmbientMusic(){
+  _ambPlaying=false;
+  _ambNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  _ambNodes=[];
+}
+
+// Pentatonic scale in A (Southeast Asian feel)
+const PENTA=[220,261,294,330,392,440,523,587,659,784,880];
+let _ambBeat=0;
+function playAmbientLoop(){
+  if(!_ambPlaying) return;
+  const ctx=getAudioCtx();
+  // Drone bass
+  const drone=()=>{
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='triangle';o.frequency.value=110;
+    g.gain.setValueAtTime(0.04,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+3.8);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+4);
+  };
+  // Melodic notes
+  const melody=()=>{
+    const notes=[0,2,4,2,1,3,4,3].map(i=>PENTA[i+((_ambBeat/4|0)%3)]);
+    notes.forEach((freq,i)=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=freq;
+      const t=ctx.currentTime+i*0.25+Math.random()*0.05;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.06,t+0.05);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o.start(t);o.stop(t+0.45);
+    });
+  };
+  // Percussion click
+  const perc=()=>{
+    [0,0.5,1.0,1.5].forEach(t=>{
+      if(Math.random()<0.7){
+        const b=ctx.createOscillator();const g=ctx.createGain();
+        b.connect(g);g.connect(ctx.destination);
+        b.type='square';b.frequency.value=300+Math.random()*100;
+        const st=ctx.currentTime+t;
+        g.gain.setValueAtTime(0.025,st);g.gain.exponentialRampToValueAtTime(0.001,st+0.06);
+        b.start(st);b.stop(st+0.07);
+      }
+    });
+  };
+  drone();melody();perc();
+  _ambBeat++;
+  setTimeout(()=>{if(_ambPlaying) playAmbientLoop();},2000+Math.random()*500);
+}
+
+// Heat/danger music intensification
+let _dangerAmbInterval=null;
+function updateDangerMusic(){
+  if(G.heat>70&&!_dangerAmbInterval){
+    _dangerAmbInterval=setInterval(()=>{
+      try{playTone(55+Math.random()*10,0.3,'sawtooth',0.02);}catch(e){}
+    },800);
+  } else if(G.heat<=70&&_dangerAmbInterval){
+    clearInterval(_dangerAmbInterval);_dangerAmbInterval=null;
+  }
+}
+
+// Start ambient when user first interacts
+let _audioStarted=false;
+function initAudio(){
+  if(_audioStarted) return;
+  _audioStarted=true;
+  startAmbientMusic();
+}
+document.addEventListener('click',initAudio,{once:true});
+document.addEventListener('keydown',initAudio,{once:true});
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(CLK.getDelta(),.05);
+  if(!G.sleeping&&!G.inRoom){
+    updatePlayer(dt);updateCamera();updateNPCs(dt);checkProx();checkHeat(dt);updateDangerMusic();tickTime(dt);tickAutoProd(dt);tickWork(dt);if(activeErrand&&errandCarrying)updateHintForErrand();drawMM();updateHUD();
+  }
+  if(!G.inRoom) R.render(S,CAM);
+}
+setupMobileControls();
+updateHUD();updateTimeHUD();updateQuestLog();updateExpHUD();animate();
+
+// Tips
+setTimeout(()=>notify('进入橙色房子与母亲索碧亚对话开始剧情','i'),800);
+setTimeout(()=>notify('进入房子找制作台，按F制作假币','i'),3000);
+setTimeout(()=>notify('去集市出售赃品，注意被抓概率！',''),5500);
+setTimeout(()=>notify('G键管理帮派 | P键购买房产 | U键技能树',''),8000);
+</script>
+</body></html>
