@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>Forgery Simulator v4</title>
+<html><head><meta charset="utf-8"><title>Forgery Simulator v4</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif;user-select:none;}
@@ -166,41 +166,19 @@ canvas#c{display:block;width:100vw;height:100vh;}
 #wantedtxt{color:#fff;font-size:12px;font-weight:600;}
 #wantedlvl{color:#fca5a5;font-size:10px;margin-top:3px;}
 
-
-/* -- MOBILE TOUCH CONTROLS -- */
-#mobileControls{display:none;position:fixed;inset:0;pointer-events:none;z-index:59;touch-action:none;}
-body.in-room #mCameraHint{display:block;}
-body.in-room #hotbar{display:none;}
-#joy{position:absolute;left:22px;bottom:28px;width:118px;height:118px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.22);pointer-events:all;touch-action:none;}
-#joyKnob{position:absolute;left:39px;top:39px;width:40px;height:40px;border-radius:50%;background:rgba(255,215,0,.72);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 16px rgba(255,215,0,.25);}
-#mActions{position:absolute;right:14px;bottom:22px;display:grid;grid-template-columns:repeat(3,56px);gap:8px;pointer-events:all;}
-.mbtn{width:56px;height:48px;border-radius:14px;background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:17px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);touch-action:manipulation;}
-.mbtn.main{background:rgba(249,115,22,.32);border-color:#f97316;color:#fed7aa;}
-.mbtn.alt{background:rgba(96,165,250,.22);border-color:#60a5fa;color:#dbeafe;}
-#mCameraHint{display:none;position:absolute;right:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.45);font-size:11px;background:rgba(0,0,0,.35);padding:6px 9px;border-radius:9px;}
-
-@media (hover:none), (pointer:coarse), (max-width:900px){
-  html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;}
-  #mobileControls{display:block;}
-  #mCameraHint{display:block;}
-  #ctrl{display:none;}
-  #hud{top:8px;left:8px;gap:3px;transform:scale(.82);transform-origin:top left;}
-  .sb{min-width:156px;padding:3px 8px;}
-  #mmap{width:82px;height:82px;right:8px;top:8px;}
-  #qlog{top:96px;right:8px;max-width:148px;padding:7px 9px;}
-  #hotbar{bottom:150px;left:50%;padding:5px;gap:4px;}
-  .hs{width:42px;height:42px;font-size:17px;}
-  #ticker{bottom:0;font-size:10px;padding:4px 8px;}
-  #ihintw{bottom:146px;font-size:11px;max-width:86vw;text-align:center;white-space:normal;}
-  #dlg{bottom:88px;width:92vw;max-height:42vh;overflow:auto;}
-  #dlgch{display:grid!important;grid-template-columns:1fr 1fr;}
-  .dc{padding:9px 10px;font-size:12px;}
-  .panel{width:94vw;max-height:78vh;padding:15px;border-radius:14px;}
-  .sgrid{grid-template-columns:1fr;}
-  #fginner{width:94vw;max-height:88vh;overflow:auto;padding:16px;}
-  #storyt{max-width:88vw;font-size:15px;}
-}
-
+/* Launder game */
+#lgame{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:72;display:none;align-items:center;justify-content:center;}
+#lginner{width:500px;background:rgba(6,8,18,.98);border:1px solid rgba(74,222,128,.3);border-radius:16px;padding:24px;box-shadow:0 0 40px rgba(0,255,100,.08);}
+#lgtitle{color:#4ade80;font-size:16px;margin-bottom:4px;}
+#lgsub{color:#666;font-size:11px;margin-bottom:18px;}
+#lgscene{position:relative;width:100%;height:120px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-bottom:14px;}
+#lgcashier{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:32px;}
+#lgplayer{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:28px;transition:left .15s;}
+#lgsuspicion{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+#lgsuspfill{height:100%;background:linear-gradient(90deg,#4ade80,#f97316,#ef4444);border-radius:4px;width:0%;transition:width .3s;}
+#lgactions{display:flex;gap:8px;margin-top:14px;}
+.lgbtn{flex:1;padding:10px;border-radius:9px;font-size:13px;cursor:pointer;pointer-events:all;border:1.5px solid;transition:all .15s;}
+.lgbtn:active{transform:scale(.96);}
 </style>
 </head>
 <body>
@@ -227,25 +205,8 @@ body.in-room #hotbar{display:none;}
   <div id="ihintw"></div>
   <div id="qlog"><div id="qlogt">📋 任务目标</div><div id="qitems"></div></div>
   <div id="ticker"><span class="ticki" id="ticktxt">📺 Siem Muang晨报：当局发现大量假币流通 || 旧工厂招标中 || 集市今日开放，欢迎各地商贩 || 警方加强巡逻，市民配合检查 || 天气：热带晴，32°C</span></div>
-  <div id="ctrl">WASD移动 | Shift冲刺 | 空格跳跃 | E进入/互动 | F制作<br>I背包 | U技能 | M地图 | G帮派 | P房产 | B睡觉</div>
+  <div id="ctrl">WASD移动 | Shift冲刺 | 空格跳跃 | E互动 | F制作<br>I背包 | U技能 | M地图 | H手机 | G帮派 | B睡觉</div>
   <div id="wanted"><div id="wantedtxt">⚠ 通缉中</div><div id="wantedlvl">警戒等级: 1</div></div>
-
-  <div id="mobileControls" aria-label="mobile controls">
-    <div id="mCameraHint">右侧滑动视角｜左摇杆移动</div>
-    <div id="joy"><div id="joyKnob"></div></div>
-    <div id="mActions">
-      <button class="mbtn alt" data-key="i">包</button>
-      <button class="mbtn alt" data-key="u">技</button>
-      <button class="mbtn alt" data-key="m">图</button>
-      <button class="mbtn main" data-key="e">交互</button>
-      <button class="mbtn main" data-key="f">制作</button>
-      <button class="mbtn main" data-key="space">跳</button>
-      <button class="mbtn" data-key="g">帮</button>
-      <button class="mbtn" data-key="p">房</button>
-      <button class="mbtn" data-key="b">睡</button>
-    </div>
-  </div>
-
 </div>
 <!-- Panels -->
 <div class="panel" id="panel"><div class="ph"><h2 id="ptitle">背包</h2><button class="pclose" id="pclose">✕</button></div><div id="pcontent"></div></div>
@@ -304,6 +265,36 @@ body.in-room #hotbar{display:none;}
 <!-- Sleep -->
 <div id="sleepov"><div id="sleept">💤 休眠中...<br><span style="font-size:14px;color:#445">体力恢复中</span></div></div>
 
+
+<!-- Launder mini-game -->
+<div id="lgame">
+  <div id="lginner">
+    <div id="lgtitle">💸 市场洗钱</div>
+    <div id="lgsub">用假钞在商店购物——要显得自然，不能引起怀疑！</div>
+    <div id="lgscene">
+      <div id="lgplayer">🧑</div>
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;color:#555;text-align:center;">计步器<br><span id="lgstep">0/4</span></div>
+      <div id="lgcashier">👩‍💼</div>
+      <div id="lgbubble" style="position:absolute;right:60px;top:12px;background:rgba(255,255,255,.08);border-radius:8px;padding:5px 10px;font-size:11px;color:#aaa;display:none;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:5px;">
+      <span>怀疑度</span><span id="lgsusp-txt">0%</span>
+    </div>
+    <div id="lgsuspicion"><div id="lgsuspfill"></div></div>
+    <div id="lglog" style="color:#888;font-size:11px;min-height:28px;margin-bottom:10px;"></div>
+    <div id="lgactions">
+      <button class="lgbtn" id="lgbtn-casual" style="border-color:#4ade80;color:#4ade80;background:rgba(74,222,128,.08);" onclick="lgAct('casual')">😊 随意购物</button>
+      <button class="lgbtn" id="lgbtn-fast" style="border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.08);" onclick="lgAct('fast')">⚡ 快速交易</button>
+      <button class="lgbtn" id="lgbtn-distract" style="border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,.08);" onclick="lgAct('distract')">💬 转移注意</button>
+    </div>
+    <div id="lgresult" style="display:none;text-align:center;padding:18px;">
+      <div id="lgri" style="font-size:48px;"></div>
+      <div id="lgrt" style="font-size:16px;margin-top:8px;"></div>
+      <div id="lgrd" style="color:#888;font-size:12px;margin-top:5px;"></div>
+      <button onclick="closeLG()" style="margin-top:14px;background:rgba(74,222,128,.1);border:1px solid #4ade80;color:#4ade80;padding:8px 24px;border-radius:8px;cursor:pointer;pointer-events:all;">完成</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ============================================================
@@ -340,21 +331,35 @@ const G={
   sf:{metMom:false,metUncle:false,uncle1:false,sold1:false,policeWarn:false,gangUnlocked:false,paid:false},
   // Quests
   quests:[
-    // 第一章: 开始
-    {id:'q1',txt:'【第一章】去家里找叔叔达拉',done:false,reward:1,chapter:1},
-    {id:'q2',txt:'【第一章】从叔叔处学习基础制作',done:false,reward:2,chapter:1},
-    {id:'q3',txt:'【第一章】在家制作台完成第一件假币',done:false,reward:2,chapter:1},
-    {id:'q4',txt:'【第一章】去市场找宋叔卖掉第一件赃品',done:false,reward:2,chapter:1},
-    // 第二章: 扩张
-    {id:'q5',txt:'【第二章】在医院为母亲索碧亚支付$800手术费',done:false,reward:5,chapter:2},
-    {id:'q6',txt:'【第二章】购买第一工厂（$3500）',done:false,reward:3,chapter:2},
-    {id:'q7',txt:'【第二章】招募第一名帮派成员',done:false,reward:2,chapter:2},
-    {id:'q8',txt:'【第二章】完成5件中级伪造品（假20元）',done:false,reward:3,chapter:2,cnt:0,need:5},
-    // 第三章: 危机
-    {id:'q9',txt:'【第三章】在银行洗钱一次（需金融初级）',done:false,reward:3,chapter:3},
-    {id:'q10',txt:'【第三章】购买一栋仓库',done:false,reward:3,chapter:3},
-    {id:'q11',txt:'【第三章】去寺庙祈祷降低热度',done:false,reward:2,chapter:3},
-    {id:'q12',txt:'【第三章】制作假100元（需高级伪造技能）',done:false,reward:5,chapter:3},
+    // Chapter 1: Falling Into Desperation
+    {id:'m1',ch:1,txt:'【C1】去医院和蒙医生对话，了解母亲病情',done:false,reward:1},
+    {id:'m2',ch:1,txt:'【C1】拜访叔叔达拉，学习地下印刷技术',done:false,reward:1},
+    {id:'m3',ch:1,txt:'【C1】制作5件假5元（共计）',done:false,reward:2,cnt:0,need:5},
+    {id:'m4',ch:1,txt:'【C1】把假钞交给黑市商人博里',done:false,reward:2},
+    // Chapter 2: Entering the Underground
+    {id:'m5',ch:2,txt:'【C2】完成2件假钞订单（任意面值）',done:false,reward:2,cnt:0,need:2},
+    {id:'m6',ch:2,txt:'【C2】在市场成功洗假钞2次',done:false,reward:2,cnt:0,need:2},
+    {id:'m7',ch:2,txt:'【C2】在市场购买纸张和墨水',done:false,reward:1},
+    // Chapter 3: Scaling Up
+    {id:'m8',ch:3,txt:'【C3】购买高级纸张（纸张x15）',done:false,reward:2},
+    {id:'m9',ch:3,txt:'【C3】制作3件假证件',done:false,reward:3,cnt:0,need:3},
+    {id:'m10',ch:3,txt:'【C3】成功销赃假20元（任意数量）',done:false,reward:2},
+    // Chapter 4: Owning the Game
+    {id:'m11',ch:4,txt:'【C4】购买第一栋仓库',done:false,reward:3},
+    {id:'m12',ch:4,txt:'【C4】招募2名帮派成员',done:false,reward:3,cnt:0,need:2},
+    {id:'m13',ch:4,txt:'【C4】累计制作20件假钞',done:false,reward:3,cnt:0,need:20},
+    // Chapter 5: Criminal Expansion
+    {id:'m14',ch:5,txt:'【C5】与帮派成员对话（酒吧）',done:false,reward:2},
+    {id:'m15',ch:5,txt:'【C5】打工5次（任意工厂或仓库）',done:false,reward:2,cnt:0,need:5},
+    {id:'m16',ch:5,txt:'【C5】购买第一工厂',done:false,reward:5},
+    // Chapter 6: Industrial Crime
+    {id:'m17',ch:6,txt:'【C6】解锁自动化生产（需300 EXP）',done:false,reward:3},
+    {id:'m18',ch:6,txt:'【C6】制作假100元（最高面值）',done:false,reward:5},
+    // Chapter 7: Power & Corruption
+    {id:'m19',ch:7,txt:'【C7】向银行洗钱降低调查等级',done:false,reward:3},
+    {id:'m20',ch:7,txt:'【C7】通过银行洗钱超过$2000',done:false,reward:5,cnt:0,need:2000},
+    // Chapter 8: Cross-Border Crime
+    {id:'m21',ch:8,txt:'【C8】完成最终国际交易（解锁结局）',done:false,reward:10},
   ],
   // Production
   autoProducing:false,autoProdTimer:0,
@@ -442,9 +447,16 @@ function sprite(txt,col='#fff',size=2.6,sc=S){
 // ============================================================
 // GROUND, ROADS, SIDEWALKS
 // ============================================================
-plane(300,300,0x6e9450,0,-0.01,0);
-// grass patches
-[[20,40],[-20,40],[40,20],[-40,-20],[10,-50],[-10,-50]].forEach(([gx,gz])=>plane(12,12,0x5a8840,gx,.02,gz));
+// Multi-layer ground system
+plane(300,300,0x507030,0,-0.02,0);// base — dark grass
+[[30,40],[-30,40],[40,20],[-40,-20],[12,-50],[-12,-50],[55,-25],[-55,28],[0,60],[60,0]].forEach(([gx,gz])=>
+  plane(22,18,0x6a9440,gx,.01,gz));// lighter grass patches
+// Earth/soil patches
+[[-8,-18],[8,-18],[0,20],[24,-10],[-24,10],[18,32],[-18,-32]].forEach(([gx,gz])=>
+  plane(9,7,0x8a7048,gx,.005,gz));
+// Worn path dirt strips along main roads
+plane(3.5,140,0x7a6040,0,.016,0);
+plane(140,3.5,0x7a6040,0,.016,0);
 
 function road(w,d,x,z,ry=0){
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat(0x4a4845,.93));
@@ -483,44 +495,162 @@ const BLDS=[
 
 function buildBuilding(b){
   if(!b.w||b.noAutoBuild){
-    // Still set up bounds for collision
     if(b.w) b.bounds={x1:b.x-b.w/2-1,x2:b.x+b.w/2+1,z1:b.z-b.d/2-1,z2:b.z+b.d/2+1};
     return;
   }
-  // Main body
-  box(b.w,b.h,b.d,b.col,b.x,b.h/2,b.z);
-  // Roof + overhang
-  box(b.w+1.5,.75,b.d+1.5,b.rcol,b.x,b.h+.38,b.z,0,.7);
-  [-b.w/2-.75,b.w/2+.75].forEach(ox=>box(.75,.65,b.d+1.5,b.rcol*.9|0,b.x+ox,b.h+.75,b.z));
-  [-b.d/2-.75,b.d/2+.75].forEach(oz=>box(b.w+1.5,.65,.75,b.rcol*.9|0,b.x,b.h+.75,b.z+oz));
-  // Door
-  box(1.9,2.9,.15,0x4a3520,b.x,1.45,b.z-b.d/2-.06);
-  box(1.7,2.7,.1,0x3a2810,b.x,1.45,b.z-b.d/2-.04,0,.35);
-  sph(.075,0xddbb44,b.x+.62,1.4,b.z-b.d/2-.15);// door handle
-  // Steps
-  box(b.w*.55,.22,1.3,0xc8b890,b.x,.11,b.z-b.d/2-.68);
-  // Windows
-  const woffs=b.w>14?[-3.5,0,3.5]:[-2.2,2.2];
-  woffs.forEach(wx=>{
-    box(1.5,1.3,.12,0x88bbee,b.x+wx,b.h*.58,b.z-b.d/2-.06,0,.1);
-    box(1.7,1.5,.08,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.09);
-    box(.06,1.3,.14,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.06);
-    box(1.5,.06,.14,0x8B7355,b.x+wx,b.h*.58,b.z-b.d/2-.06);
+  const bx=b.x,bz=b.z,bw=b.w,bh=b.h,bd=b.d,front=bz-bd/2;
+
+  // === BASE CONCRETE BAND ===
+  box(bw+.4,.35,bd+.4,b.col*.85|0,bx,.18,bz,0,.95);
+
+  // === MAIN BODY (slightly textured with darker tone) ===
+  box(bw,bh,bd,b.col,bx,bh/2,bz,0,.85);
+
+  // === WALL PANEL DETAILS (horizontal bands) ===
+  const darkcol=(b.col&0xFEFEFE)>>1; // darker variant
+  [.35,.65].forEach(frac=>{
+    box(bw+.1,.06,bd+.1,darkcol,bx,bh*frac,bz,0,.9);
   });
-  // Hospital cross
+  // Corner pilasters
+  [-bw/2+.15,bw/2-.15].forEach(cx=>{
+    box(.3,bh,.35,b.col*.95|0,bx+cx,bh/2,bz,0,.8);
+  });
+
+  // === ROOF SYSTEM ===
+  box(bw+1.6,.8,bd+1.6,b.rcol,bx,bh+.4,bz,0,.7);
+  // Roof edging / parapet
+  [-bw/2-.8,bw/2+.8].forEach(ox=>{box(.8,.55,bd+1.6,b.rcol*.88|0,bx+ox,bh+.9,bz,0,.7);});
+  [-bd/2-.8,bd/2+.8].forEach(oz=>{box(bw+1.6,.55,.8,b.rcol*.88|0,bx,bh+.9,bz+oz,0,.7);});
+  // Roof AC unit
+  box(1.4,.55,1.1,0x888888,bx+bw*.25,bh+.8,bz+bd*.15,0,.7);
+  box(1.5,.1,1.2,0x777777,bx+bw*.25,bh+1.08,bz+bd*.15);
+  // Roof pipes/vents
+  cyl(.12,.12,.6,6,0x666666,bx-bw*.3,bh+.6,bz-bd*.2);
+  cyl(.18,.2,.15,8,0x555555,bx-bw*.3,bh+.92,bz-bd*.2);
+
+  // === DOOR (detailed) ===
+  // Door surround/archway
+  box(2.3,3.2,.18,b.col*.8|0,bx,1.6,front-.04);
+  // Door panels (dark wood double door)
+  box(.92,2.85,.12,0x5a3a18,bx-.48,1.43,front-.02);
+  box(.92,2.85,.12,0x5a3a18,bx+.48,1.43,front-.02);
+  // Door divider
+  box(.08,2.85,.14,0x3a2010,bx,1.43,front-.02);
+  // Door glass panels
+  box(.75,.8,.05,0xaaccee,bx-.48,1.85,front,.0,.1);
+  box(.75,.8,.05,0xaaccee,bx+.48,1.85,front,.0,.1);
+  // Door handles
+  sph(.07,0xddbb44,bx-.12,1.38,front-.08);
+  sph(.07,0xddbb44,bx+.12,1.38,front-.08);
+  // Transom window above door
+  box(2,.45,.1,0xaaddee,bx,3.12,front-.02,.0,.1);
+  box(2.1,.5,.08,0x6a5030,bx,3.12,front-.04);
+
+  // === ENTRANCE STEPS (multi-tier) ===
+  box(bw*.55,.28,1.5,0xc8b890,bx,.14,front-.75);
+  box(bw*.45,.14,1.0,0xd0c098,bx,.07,front-.2);
+  // Step railings
+  [-bw*.22,bw*.22].forEach(rx=>{
+    cyl(.05,.05,.45,6,0xaaaaaa,bx+rx,.23,front-.75);
+    box(.45,.05,.05,0xaaaaaa,bx+rx+bw*.05,.44,front-.75);
+  });
+
+  // === WINDOWS (detailed with sills and shutters) ===
+  const woffs=bw>14?[-4,-1.3,1.3,4]:bw>10?[-2.8,2.8]:[-2,2];
+  const wrows=bh>7?2:1;
+  for(let row=0;row<wrows;row++){
+    const wy=bh*(row===0?.42:.7);
+    woffs.forEach(wx=>{
+      // Window glass
+      box(1.4,1.25,.1,0x88ccee,bx+wx,wy,front-.05,.0,.08);
+      // Frame (thick dark frame)
+      box(1.65,1.5,.12,0x7a5030,bx+wx,wy,front-.08);
+      // Cross divider
+      box(.05,1.25,.13,0x7a5030,bx+wx,wy,front-.06);
+      box(1.4,.05,.13,0x7a5030,bx+wx,wy,front-.06);
+      // Window sill (concrete ledge)
+      box(1.8,.12,.3,0xccbbaa,bx+wx,wy-0.68,front+.04,.0,.9);
+      // Shutters (half-open look)
+      if(Math.random()>.4){
+        box(.55,1.2,.06,0x6a4820,bx+wx-.75,wy,front-.14,.3);
+      }
+    });
+  }
+
+  // === SIDE WALL WINDOWS (if wide building) ===
+  if(bw>12){
+    [-bd*.28,bd*.28].forEach(wz=>{
+      box(1.3,1.2,.1,0x88ccee,bx-bw/2-.04,bh*.5,bz+wz,.0,.08);
+      box(1.55,1.45,.12,0x7a5030,bx-bw/2-.06,bh*.5,bz+wz);
+      box(1.7,.12,.28,0xccbbaa,bx-bw/2-.06,bh*.5-.66,bz+wz,.0,.9);
+    });
+  }
+
+  // === SPECIAL PER-BUILDING DETAILS ===
   if(b.id==='hospital'){
-    box(.5,2.5,.3,0xee2222,b.x,b.h+1.2,b.z-b.d/2-.1);
-    box(2,.5,.3,0xee2222,b.x,b.h+1.2,b.z-b.d/2-.1);
+    // Red cross sign (illuminated)
+    box(.55,2.8,.3,0xee2222,bx,bh+1.35,front-.1);
+    box(2.2,.55,.3,0xee2222,bx,bh+1.35,front-.1);
+    const crossL=new THREE.PointLight(0xff2222,.6,6);crossL.position.set(bx,bh+2,front);S.add(crossL);
+    // Ambulance bay markings
+    box(bw*.4,.02,2,0xee2222,bx,.22,front-1.5,0,.95);
+    box(bw*.4,.02,.2,0xffffff,bx,.22,front-1.5,0,.95);
   }
-  // Police light
   if(b.id==='police'){
-    const pl=new THREE.PointLight(0x0000ff,.8,8);pl.position.set(b.x,b.h+.5,b.z);S.add(pl);
-    setInterval(()=>{pl.color.setHex(pl.color.getHex()===0x0000ff?0xff0000:0x0000ff);},600);
+    const pl=new THREE.PointLight(0x0033ff,.9,8);pl.position.set(bx,bh+.5,bz);S.add(pl);
+    setInterval(()=>{pl.color.setHex(pl.color.getHex()===0x0033ff?0xff2200:0x0033ff);},700);
+    // Flagpole
+    cyl(.06,.06,4,6,0xdddddd,bx-bw*.35,bh+2,front-.2);
+    box(1.4,.6,.05,0x3355aa,bx-bw*.35+.7,bh+4.2,front-.2);
+    // Bollards
+    [-2,-1,0,1,2].forEach(bi=>cyl(.12,.12,.5,6,0xddcc00,bx+bi*.7,.25,front-.5));
   }
-  // Sign
+  if(b.id==='bank'){
+    // More columns
+    [-5,-2.5,2.5,5].forEach(cx=>{
+      cyl(.38,.42,bh*.9,12,0xf0e8d0,bx+cx,bh*.45,front+.2);
+      box(.9,.25,.9,0xe8e0c8,bx+cx,.12,front+.2);// base
+    });
+    // Grand entrance pediment
+    box(bw*.7,.6,1.2,0xe0d8b0,bx,bh+1.1,front+.1);
+  }
+  if(b.id==='market'){
+    // Colourful awning strips
+    [0xee4411,0xddaa00,0xee4411].forEach((c,i)=>box(bw*.32,.22,bd+1.5,c,bx+(i-1)*bw*.34,bh+.5,bz,.0,.7));
+    // Open-air feeling: extra side detail
+    box(bw+.2,.12,bd+.2,0xcc8820,bx,bh+.15,bz,.0,.7);
+  }
+  if(b.id==='factory'||b.id==='factory2'){
+    // Industrial corrugated look: dark bands
+    for(let bi=0;bi<6;bi++) box(bw+.05,.08,bd+.05,0x6a7a5a,bx,1+bi*1.1,bz,.0,.9);
+    // Loading dock
+    box(bw*.35,2.2,1,0x555544,bx+bw*.25,1.1,bz+bd/2+.5);
+    box(bw*.35,.15,1.2,0x444433,bx+bw*.25,2.2,bz+bd/2+.5);
+    // Safety stripe
+    box(bw*.35,.04,1,0xffdd00,bx+bw*.25,2.22,bz+bd/2+.5,.0,.9);
+  }
+  if(b.id==='wh1'||b.id==='wh2'||b.id==='wh3'||b.id==='wh4'){
+    // Blue roof standing seam detail
+    for(let wi=0;wi<6;wi++) box(.12,bh,.05,b.col*.8|0,bx-bw/2+wi*bw/5,.5,bz+bd/2-.02);
+    // Loading dock at back
+    box(3,2.5,.8,0x445566,bx,1.25,bz+bd/2+.4);
+    box(3.2,.14,.9,0x3a4455,bx,2.5,bz+bd/2+.4);
+  }
+  if(b.id==='bar'){
+    // Neon sign glow box
+    box(bw*.6,.4,.15,0x330a20,bx,bh-.5,front-.05);
+    const neonL=new THREE.PointLight(0xff0088,.8,6);neonL.position.set(bx,bh-.5,front);S.add(neonL);
+    // Outdoor seating hint
+    box(1,.7,1,0x3a2010,bx-bw*.35,.35,front-1.8);
+    box(1.3,.06,1.3,0x4a3020,bx-bw*.35,.72,front-1.8);
+  }
+
+  // === SIGN ===
   const sgcol=b.bought||b.price===0?'#ffd700':'#f97316';
-  const sg=sprite(b.n,sgcol,3.2);sg.position.set(b.x,b.h+1.5,b.z-b.d/2-.2);b.signSp=sg;
-  b.bounds={x1:b.x-b.w/2-1,x2:b.x+b.w/2+1,z1:b.z-b.d/2-1,z2:b.z+b.d/2+1};
+  const sg=sprite(b.n,sgcol,3.4);sg.position.set(bx,bh+1.6,front-.15);b.signSp=sg;
+
+  // === COLLISION BOUNDS ===
+  b.bounds={x1:bx-bw/2-1,x2:bx+bw/2+1,z1:bz-bd/2-1,z2:bz+bd/2+1};
 }
 BLDS.forEach(buildBuilding);
 
@@ -606,11 +736,24 @@ box(8,.5,4,0xb8a888,-62,0,0);cyl(.2,.2,1.5,6,0xaa9977,-65,0.75,0);cyl(.2,.2,1.5,
   cyl(.3,.38,3.5,8,0x7a5030,tx,1.75,tz);
   cyl(3,.6,3.2,10,0x26702a,tx,4.6,tz);cyl(2.4,.3,2.2,10,0x347a30,tx,5.9,tz);cyl(1.8,.1,1.8,8,0x3c8038,tx,6.9,tz);
 });
-// Bushes (larger variety)
+// Bushes — layered tropical shrubs
 [[6,-28],[12,-28],[-5,-28],[10,-8],[-10,-8],[20,8],[-20,8],[8,32],
  [18,-30],[-15,18],[22,35],[-8,42],[35,18],[-30,22],[12,-15]].forEach(([bx,bz])=>{
-  sph(1.3,0x2a8a2a,bx,1.1,bz,.9);sph(.95,0x357535,bx+.8,1.15,bz-.6,.9);
-  sph(.7,0x2d7a2d,bx-.6,1.0,bz+.5,.9);
+  // Woody base
+  cyl(.18,.22,.55,8,0x8a6030,bx,.28,bz);
+  // Foliage cluster (5-7 overlapping spheres)
+  [[0,0],[.7,.3],[-.6,.4],[.3,-.6],[-.4,-.3]].forEach(([ox,oz])=>
+    sph(.65+Math.random()*.25,Math.random()<.5?0x2a8a2a:0x358530,bx+ox,1.0+Math.random()*.3,bz+oz,.9));
+  sph(.5,0x3a9530,bx+.1,1.7,.9);// top highlight
+});
+// Low ground cover — ferns (flat fan shapes)
+[[-3,-25],[3,-25],[-12,-12],[12,-12],[-20,5],[20,5],[5,35],[-5,35],[25,-38]].forEach(([fx,fz])=>{
+  for(let k=0;k<5;k++){
+    const a=k/5*Math.PI*2;
+    const frn=new THREE.Mesh(new THREE.BoxGeometry(.04,1.2,.06),new THREE.MeshStandardMaterial({color:0x2a7828,roughness:.95}));
+    frn.position.set(fx+Math.sin(a)*.4,.6,fz+Math.cos(a)*.4);
+    frn.rotation.set(-.5+Math.random()*.3,a,0);S.add(frn);
+  }
 });
 // Tall grass clumps (thin vertical boxes)
 const grassPts=[
@@ -732,28 +875,152 @@ const INDOOR_NPCDEFS={
 
 function buildNPC(def){
   const g=new THREE.Group();
-  // Legs
-  const legs=[];[-.15,.15].forEach((lx,i)=>{const lg=box(.23,.75,.23,0x2a3a88,lx,.375,0,0,.8,g);legs.push(lg);});
+  const skinCol=def.col===0xf4c888?0xe8b87a:def.col; // use def.col as shirt, separate skin
+  const skin=0xd4956a;
+
+  // === LEGS (rounded cylinders, tapered) ===
+  const legs=[];
+  [-.14,.14].forEach((lx)=>{
+    // Upper leg
+    const ul=new THREE.Mesh(new THREE.CylinderGeometry(.1,.11,.5,8),new THREE.MeshStandardMaterial({color:0x223366,roughness:.85}));
+    ul.position.set(lx,.55,0);g.add(ul);
+    // Lower leg
+    const ll=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.45,8),new THREE.MeshStandardMaterial({color:0x1a2a55,roughness:.85}));
+    ll.position.set(lx,.15,0);g.add(ll);
+    // Shoe
+    const sh=new THREE.Mesh(new THREE.BoxGeometry(.18,.1,.32),new THREE.MeshStandardMaterial({color:0x111111,roughness:.7}));
+    sh.position.set(lx,.055,.04);g.add(sh);
+    legs.push(ul,ll);
+  });
   g.userData.legs=legs;
-  // Body
-  box(.55,1.1,.4,def.col,0,1.0,0,0,.8,g);
-  // Arms
-  [-.42,.42].forEach(ax=>box(.22,.78,.22,def.col,ax,.9,0,0,.8,g));
-  // Head
-  box(.52,.54,.5,0xf4c888,0,1.82,0,0,.7,g);
-  // Hair
-  const hairCol=def.role==='police'?0x111155:def.role==='doctor'?0x888888:0x1a1008;
-  box(.54,.2,.52,hairCol,0,2.08,0,0,.9,g);
-  // Eyes
-  [-.13,.13].forEach(ex=>sph(.06,0x111111,ex,1.84,.26,.9,g));
-  // Special accessories
-  if(def.role==='police'){box(.58,.2,.56,0x2233aa,0,2.2,0,0,.7,g);box(.15,.12,.05,0xddaa00,.15,1.15,.22,0,.5,g);}
-  if(def.role==='worker') sph(.32,0xffaa00,0,2.16,0,.7,g);
-  if(def.role==='doctor'){box(.6,.22,.55,0xffffff,0,2.18,0,0,.5,g);box(.08,.6,.06,0xff4444,.05,1.0,.22,0,.5,g);}
-  if(def.role==='gangster'){box(.54,.2,.52,0x111111,0,2.08,0,0,.9,g);}
-  // Label sprite
+
+  // === TORSO (rounded, tapered chest) ===
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.22,.2,.7,10),new THREE.MeshStandardMaterial({color:def.col,roughness:.8}));
+  torso.position.set(0,1.15,0);g.add(torso);
+  // Belt
+  const belt=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.06,10),new THREE.MeshStandardMaterial({color:0x333333,roughness:.6,metalness:.2}));
+  belt.position.set(0,.82,0);g.add(belt);
+  // Collar/shirt detail
+  const collar=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.12,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7}));
+  collar.position.set(0,1.48,0);g.add(collar);
+
+  // === ARMS (upper+lower, rounded) ===
+  [-.28,.28].forEach((ax,si)=>{
+    // Upper arm
+    const ua=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.38,8),new THREE.MeshStandardMaterial({color:def.col,roughness:.8}));
+    ua.position.set(ax*1.4,1.2,0);ua.rotation.z=ax>0?-.25:.25;g.add(ua);
+    // Lower arm / hand
+    const la=new THREE.Mesh(new THREE.CylinderGeometry(.07,.08,.32,8),new THREE.MeshStandardMaterial({color:skin,roughness:.75}));
+    la.position.set(ax*1.65,.92,0);la.rotation.z=ax>0?-.2:.2;g.add(la);
+    // Hand
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+    hand.position.set(ax*1.82,.78,0);g.add(hand);
+  });
+
+  // === NECK ===
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.1,.12,.18,8),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+  neck.position.set(0,1.56,0);g.add(neck);
+
+  // === HEAD (sphere-based, more realistic) ===
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.26,12,10),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+  head.scale.set(1,.95,1);head.position.set(0,1.9,0);g.add(head);
+
+  // Jawline detail
+  const jaw=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),new THREE.MeshStandardMaterial({color:skin,roughness:.75}));
+  jaw.scale.set(1,.7,1);jaw.position.set(0,1.72,.04);g.add(jaw);
+
+  // === FACE FEATURES ===
+  // Eyes (white + pupil)
+  [-.1,.1].forEach(ex=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3}));
+    eye.position.set(ex,1.93,.23);g.add(eye);
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(.032,6,5),new THREE.MeshStandardMaterial({color:0x111111,roughness:.2}));
+    pupil.position.set(ex,1.93,.27);g.add(pupil);
+    // Eyebrow
+    const brow=new THREE.Mesh(new THREE.BoxGeometry(.1,.025,.04),new THREE.MeshStandardMaterial({color:0x2a1a08,roughness:.9}));
+    brow.position.set(ex,2.0,.24);brow.rotation.z=ex<0?.1:-.1;g.add(brow);
+  });
+  // Nose
+  const nose=new THREE.Mesh(new THREE.SphereGeometry(.04,6,5),new THREE.MeshStandardMaterial({color:skin*.9|0,roughness:.75}));
+  nose.scale.set(.8,1,.5);nose.position.set(0,1.86,.27);g.add(nose);
+  // Mouth
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(.1,.022,.04),new THREE.MeshStandardMaterial({color:0x8B4040,roughness:.8}));
+  mouth.position.set(0,1.77,.27);g.add(mouth);
+  // Ears
+  [-.26,.26].forEach(ex=>{
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.06,6,5),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+    ear.scale.set(.5,1,.6);ear.position.set(ex,1.9,.02);g.add(ear);
+  });
+
+  // === HAIR (role-based) ===
+  const hairCol=def.role==='police'?0x111155:def.role==='doctor'?0x777777:
+    def.role==='banker'?0x3a2a10:def.id==='pass3'||def.id==='mother'?0x1a0a0a:0x1a1008;
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.27,10,8),new THREE.MeshStandardMaterial({color:hairCol,roughness:.95}));
+  hair.scale.set(1,.65,1);hair.position.set(0,2.1,-.04);g.add(hair);
+  // Hair top
+  const hairTop=new THREE.Mesh(new THREE.SphereGeometry(.24,8,6),new THREE.MeshStandardMaterial({color:hairCol,roughness:.95}));
+  hairTop.scale.set(1,.5,1);hairTop.position.set(0,2.18,0);g.add(hairTop);
+
+  // === ROLE-SPECIFIC ACCESSORIES ===
+  if(def.role==='police'){
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.28,.31,.12,10),new THREE.MeshStandardMaterial({color:0x2233aa,roughness:.6}));
+    cap.position.set(0,2.2,0);g.add(cap);
+    const capBrim=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.05,10),new THREE.MeshStandardMaterial({color:0x1a2299,roughness:.5}));
+    capBrim.position.set(0,2.12,.02);capBrim.rotation.x=-.1;g.add(capBrim);
+    const badge=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.04),new THREE.MeshStandardMaterial({color:0xddaa00,metalness:.6,roughness:.3}));
+    badge.position.set(.12,1.22,.24);g.add(badge);
+    const star=new THREE.Mesh(new THREE.SphereGeometry(.04,4,4),new THREE.MeshStandardMaterial({color:0xffdd00,metalness:.7}));
+    star.position.set(.12,1.22,.28);g.add(star);
+  }
+  if(def.role==='worker'||def.id==='worker'){
+    const helm=new THREE.Mesh(new THREE.SphereGeometry(.29,10,8),new THREE.MeshStandardMaterial({color:0xffaa00,roughness:.6}));
+    helm.scale.set(1,.7,1);helm.position.set(0,2.15,0);g.add(helm);
+    const helmBrim=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.05,10),new THREE.MeshStandardMaterial({color:0xff9900,roughness:.6}));
+    helmBrim.position.set(0,2.05,.02);helmBrim.rotation.x=-.08;g.add(helmBrim);
+    // High-vis vest strips
+    [1.04,1.25].forEach(hy=>{
+      const strip=new THREE.Mesh(new THREE.CylinderGeometry(.23,.22,.04,10),new THREE.MeshStandardMaterial({color:0xffee00,roughness:.6}));
+      strip.position.set(0,hy,0);g.add(strip);
+    });
+  }
+  if(def.role==='doctor'){
+    const coat=new THREE.Mesh(new THREE.CylinderGeometry(.24,.22,.75,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7}));
+    coat.position.set(0,1.14,0);g.add(coat);
+    // Stethoscope
+    const stet=new THREE.Mesh(new THREE.TorusGeometry(.1,.02,6,10,.8),new THREE.MeshStandardMaterial({color:0x222222,roughness:.4}));
+    stet.position.set(0,1.45,.22);stet.rotation.x=Math.PI/2;g.add(stet);
+  }
+  if(def.role==='black_market'||def.role==='gangster'||def.role==='gangster_indoor'){
+    const hood=new THREE.Mesh(new THREE.SphereGeometry(.32,10,8),new THREE.MeshStandardMaterial({color:0x111111,roughness:.9}));
+    hood.scale.set(1,.8,1.1);hood.position.set(0,2.05,-.04);g.add(hood);
+    // Sunglasses
+    [-.1,.1].forEach(ex=>{
+      const glass=new THREE.Mesh(new THREE.BoxGeometry(.13,.06,.04),new THREE.MeshStandardMaterial({color:0x000000,roughness:.1,metalness:.5}));
+      glass.position.set(ex,1.92,.27);g.add(glass);
+    });
+    const glassBar=new THREE.Mesh(new THREE.BoxGeometry(.22,.02,.03),new THREE.MeshStandardMaterial({color:0x333333,metalness:.6}));
+    glassBar.position.set(0,1.92,.26);g.add(glassBar);
+  }
+  if(def.role==='monk'){
+    const robe=new THREE.Mesh(new THREE.CylinderGeometry(.26,.28,.78,10),new THREE.MeshStandardMaterial({color:0xff8822,roughness:.85}));
+    robe.position.set(0,1.1,0);g.add(robe);
+    const robeShould=new THREE.Mesh(new THREE.CylinderGeometry(.28,.26,.15,10),new THREE.MeshStandardMaterial({color:0xee7711,roughness:.85}));
+    robeShould.position.set(0,1.48,0);g.add(robeShould);
+    // Shaved head
+    hair.material=new THREE.MeshStandardMaterial({color:skin,roughness:.8});
+    hairTop.material=new THREE.MeshStandardMaterial({color:skin,roughness:.8});
+    // Beads
+    for(let b=0;b<8;b++){
+      const bead=new THREE.Mesh(new THREE.SphereGeometry(.03,5,4),new THREE.MeshStandardMaterial({color:0x8B4513,roughness:.6}));
+      const a=b/8*Math.PI*2;
+      bead.position.set(Math.sin(a)*.18,1.5,Math.cos(a)*.18);g.add(bead);
+    }
+  }
+
+  // === LABEL ===
   const lbl=new THREE.Sprite(new THREE.SpriteMaterial({map:makeNPCTex(def.e+' '+def.n),transparent:true}));
-  lbl.scale.set(2.6,.56,1);lbl.position.y=2.75;g.add(lbl);
+  lbl.scale.set(2.6,.56,1);lbl.position.y=2.85;g.add(lbl);
+
   g.position.set(def.x,0,def.z);
   g.userData={...def,wAngle:Math.random()*Math.PI*2,wTimer:0,wSpd:.22+Math.random()*.18,wPhase:0};
   S.add(g);return g;
@@ -771,81 +1038,57 @@ const NPCS=NPCDEFS.map(buildNPC);
 // PLAYER
 // ============================================================
 const PLR=new THREE.Group();
-const plrLegs=[];[-.15,.15].forEach((lx,i)=>{const lg=box(.24,.75,.24,0x223388,lx,.375,0,0,.8,PLR);plrLegs.push(lg);});
-box(.54,1.1,.4,0x3366cc,0,1.0,0,0,.75,PLR);
-const plrArms=[];[-.42,.42].forEach(ax=>{const a=box(.22,.78,.22,0x3366cc,ax,.9,0,0,.75,PLR);plrArms.push(a);});
-box(.52,.52,.5,0xf4c888,0,1.82,0,0,.7,PLR);
-box(.54,.2,.52,0x111008,0,2.06,0,0,.9,PLR);
-[-.13,.13].forEach(ex=>sph(.06,0x111111,ex,1.84,.26,.9,PLR));
+const skin=0xd4956a;
+// Legs
+const plrLegs=[];
+[-.14,.14].forEach(lx=>{
+  const ul=new THREE.Mesh(new THREE.CylinderGeometry(.1,.11,.5,8),new THREE.MeshStandardMaterial({color:0x223388,roughness:.85}));
+  ul.position.set(lx,.55,0);PLR.add(ul);
+  const ll=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.45,8),new THREE.MeshStandardMaterial({color:0x1a2a66,roughness:.85}));
+  ll.position.set(lx,.15,0);PLR.add(ll);
+  const sh=new THREE.Mesh(new THREE.BoxGeometry(.18,.1,.32),new THREE.MeshStandardMaterial({color:0x111111,roughness:.7}));
+  sh.position.set(lx,.055,.04);PLR.add(sh);
+  plrLegs.push(ul,ll);
+});
+// Torso
+const plrTorso=new THREE.Mesh(new THREE.CylinderGeometry(.22,.2,.72,10),new THREE.MeshStandardMaterial({color:0x3366cc,roughness:.75}));
+plrTorso.position.set(0,1.15,0);PLR.add(plrTorso);
+new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.06,10),new THREE.MeshStandardMaterial({color:0x333333,roughness:.6}));
+// Arms
+const plrArms=[];
+[-.28,.28].forEach(ax=>{
+  const ua=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.38,8),new THREE.MeshStandardMaterial({color:0x3366cc,roughness:.75}));
+  ua.position.set(ax*1.4,1.2,0);ua.rotation.z=ax>0?-.25:.25;PLR.add(ua);
+  const la=new THREE.Mesh(new THREE.CylinderGeometry(.07,.08,.32,8),new THREE.MeshStandardMaterial({color:skin,roughness:.75}));
+  la.position.set(ax*1.65,.92,0);la.rotation.z=ax>0?-.2:.2;PLR.add(la);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+  hand.position.set(ax*1.82,.78,0);PLR.add(hand);
+  plrArms.push(ua,la);
+});
+// Neck
+const plrNeck=new THREE.Mesh(new THREE.CylinderGeometry(.1,.12,.18,8),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+plrNeck.position.set(0,1.56,0);PLR.add(plrNeck);
+// Head
+const plrHead=new THREE.Mesh(new THREE.SphereGeometry(.26,12,10),new THREE.MeshStandardMaterial({color:skin,roughness:.7}));
+plrHead.scale.set(1,.95,1);plrHead.position.set(0,1.9,0);PLR.add(plrHead);
+const plrJaw=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),new THREE.MeshStandardMaterial({color:skin,roughness:.75}));
+plrJaw.scale.set(1,.7,1);plrJaw.position.set(0,1.72,.04);PLR.add(plrJaw);
+// Face
+[-.1,.1].forEach(ex=>{
+  const eye=new THREE.Mesh(new THREE.SphereGeometry(.052,8,6),new THREE.MeshStandardMaterial({color:0xffffff}));
+  eye.position.set(ex,1.93,.23);PLR.add(eye);
+  const pupil=new THREE.Mesh(new THREE.SphereGeometry(.03,6,5),new THREE.MeshStandardMaterial({color:0x111111}));
+  pupil.position.set(ex,1.93,.27);PLR.add(pupil);
+});
+// Hair
+const plrHair=new THREE.Mesh(new THREE.SphereGeometry(.27,10,8),new THREE.MeshStandardMaterial({color:0x1a1008,roughness:.95}));
+plrHair.scale.set(1,.65,1);plrHair.position.set(0,2.1,-.04);PLR.add(plrHair);
 PLR.position.copy(G.ppos);S.add(PLR);
 
 // ============================================================
 // INPUT
 // ============================================================
 const K={};
-
-const IS_MOBILE = matchMedia('(hover:none), (pointer:coarse), (max-width:900px)').matches;
-function safePointerLock(el){
-  if(IS_MOBILE) return;
-  try{ if(el && el.requestPointerLock) el.requestPointerLock(); }catch(e){}
-}
-function tapKey(k){
-  if(k==='space') k=' ';
-  initAudio();
-  K[k]=true;
-  const ev=new KeyboardEvent('keydown',{key:k,bubbles:true});
-  document.dispatchEvent(ev);
-  setTimeout(()=>{K[k]=false;document.dispatchEvent(new KeyboardEvent('keyup',{key:k,bubbles:true}));},80);
-}
-function resetMobileMoveKeys(){
-  ['w','a','s','d','shift'].forEach(k=>K[k]=false);
-  const knob=document.getElementById('joyKnob');
-  if(knob) knob.style.transform='translate(0,0)';
-}
-function setupMobileControls(){
-  if(!IS_MOBILE) return;
-  const mc=document.getElementById('mobileControls');
-  // Move mobile controls out of #ui so the room/interior overlay cannot cover them.
-  // z-index puts it above #interior, but below dialogs, panels and forge mini-games.
-  if(mc && mc.parentElement!==document.body) document.body.appendChild(mc);
-  document.body.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-  const joy=document.getElementById('joy'), knob=document.getElementById('joyKnob');
-  let joyId=null, cx=0, cy=0;
-  function resetMove(){resetMobileMoveKeys();}
-  function updateJoy(t){
-    const dx=t.clientX-cx, dy=t.clientY-cy, max=42;
-    const len=Math.hypot(dx,dy)||1, nx=dx/len*Math.min(max,len), ny=dy/len*Math.min(max,len);
-    knob.style.transform=`translate(${nx}px,${ny}px)`;
-    K['w']=ny<-14; K['s']=ny>14; K['a']=nx<-14; K['d']=nx>14; K['shift']=len>52;
-  }
-  joy.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joyId=t.identifier;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;updateJoy(t);},{passive:false});
-  joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyId) updateJoy(t);}},{passive:false});
-  joy.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===joyId){joyId=null;resetMove();}}});
-  joy.addEventListener('touchcancel',()=>{joyId=null;resetMove();});
-
-  document.querySelectorAll('.mbtn').forEach(btn=>{
-    let lastTouch=0;
-    btn.addEventListener('touchstart',e=>{e.preventDefault();lastTouch=Date.now();tapKey(btn.dataset.key);},{passive:false});
-    btn.addEventListener('click',e=>{e.preventDefault();if(Date.now()-lastTouch>450) tapKey(btn.dataset.key);});
-  });
-  document.querySelectorAll('.hs').forEach((el,idx)=>{
-    el.addEventListener('touchstart',e=>{e.preventDefault();G.activeSlot=idx;updateHotbar();},{passive:false});
-  });
-
-  let camId=null,lastX=0,lastY=0;
-  function camMove(t){
-    const dx=t.clientX-lastX, dy=t.clientY-lastY; lastX=t.clientX; lastY=t.clientY;
-    if(G.inRoom){G.iyaw-=dx*.004;G.ipitch=Math.max(-1.2,Math.min(.2,G.ipitch-dy*.004));}
-    else{G.pyaw-=dx*.004;G.ppitch=Math.max(-1.3,Math.min(.2,G.ppitch-dy*.004));}
-  }
-  [cv,ic].forEach(el=>{
-    el.addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(t.clientX>innerWidth*.38){camId=t.identifier;lastX=t.clientX;lastY=t.clientY;initAudio();}}},{passive:false});
-    el.addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===camId){e.preventDefault();camMove(t);}}},{passive:false});
-    el.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===camId)camId=null;}});
-    el.addEventListener('touchcancel',()=>{camId=null;});
-  });
-}
-
 document.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();K[k]=true;
   if(k===' '){e.preventDefault();
@@ -853,11 +1096,12 @@ document.addEventListener('keydown',e=>{
     else if(document.getElementById('fgame').style.display==='flex') fgSpacePress();
   }
   if(k==='e') doInteract();
-  if(k==='i') openPanel('inv');
+  if(k==='i'&&!G.inRoom) openPanel('inv');
   if(k==='u') openPanel('skills');
-  if(k==='g') openPanel('gang');
+  if(k==='g'&&!G.inRoom) openPanel('gang');
   if(k==='m') openMapPanel();
-  if(k==='p') openPanel('props');
+  if(k==='h') openPhone();
+  if(k==='p'&&!G.inRoom) openPanel('props');
   if(k==='f'&&!G.sleeping) openFG();
   if(k==='b') trySleep();
   if(k==='escape') closeAll();
@@ -866,14 +1110,14 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>K[e.key.toLowerCase()]=false);
 cv.addEventListener('click',()=>{
   if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&document.getElementById('dlg').style.display==='none')
-    safePointerLock(cv);
+    cv.requestPointerLock();
 });
 document.addEventListener('pointerlockchange',()=>{G.plocked=document.pointerLockElement===cv;});
 document.addEventListener('mousemove',e=>{
   if(G.plocked&&!G.sleeping&&!G.inRoom){G.pyaw-=e.movementX*.002;G.ppitch=Math.max(-1.3,Math.min(.2,G.ppitch-e.movementY*.002));}
   if(G.ilocked&&G.inRoom){G.iyaw-=e.movementX*.002;G.ipitch=Math.max(-1.2,Math.min(.2,G.ipitch-e.movementY*.002));}
 });
-ic.addEventListener('click',()=>{if(G.inRoom&&document.getElementById('dlg').style.display==='none')safePointerLock(ic);});
+ic.addEventListener('click',()=>{if(G.inRoom&&document.getElementById('dlg').style.display==='none')ic.requestPointerLock();});
 document.addEventListener('pointerlockchange',()=>{G.ilocked=document.pointerLockElement===ic;});
 
 function doJump(){G.pvy=5.8;G.onGnd=false;}
@@ -899,11 +1143,11 @@ function updatePlayer(dt){
     // no stamina drain from walking
     G.wc+=dt*9;
     if(Math.floor(G.wc*2)!==Math.floor((G.wc-dt*9)*2)) playFootstep();
-    plrLegs[0].rotation.x=Math.sin(G.wc)*.45;plrLegs[1].rotation.x=-Math.sin(G.wc)*.45;
-    plrArms[0].rotation.x=-Math.sin(G.wc)*.35;plrArms[1].rotation.x=Math.sin(G.wc)*.35;
+    plrLegs[0].rotation.x=Math.sin(G.wc)*.4;plrLegs[1].rotation.x=Math.sin(G.wc)*.35;plrLegs[2].rotation.x=-Math.sin(G.wc)*.4;plrLegs[3].rotation.x=-Math.sin(G.wc)*.35;
+    if(plrArms[0])plrArms[0].rotation.x=-Math.sin(G.wc)*.3;if(plrArms[2])plrArms[2].rotation.x=Math.sin(G.wc)*.3;
   } else {
-    plrLegs[0].rotation.x*=.8;plrLegs[1].rotation.x*=.8;
-    plrArms[0].rotation.x*=.8;plrArms[1].rotation.x*=.8;
+    plrLegs.forEach(l=>{if(l)l.rotation.x*=.8;});
+    plrArms.forEach(a=>{if(a)a.rotation.x*=.8;});
   }
   // Gravity & jump
   G.pvy-=20*dt;PLR.position.y+=G.pvy*dt;
@@ -971,7 +1215,11 @@ function updateNPCs(dt){
     if(d2<wR){
       n.position.x=nx;n.position.z=nz;n.rotation.y=Math.atan2(dx,dz);
       n.userData.wPhase+=dt*5;
-      if(n.userData.legs){n.userData.legs[0].rotation.x=Math.sin(n.userData.wPhase)*.35;n.userData.legs[1].rotation.x=-Math.sin(n.userData.wPhase)*.35;}
+      if(n.userData.legs){const ph=n.userData.wPhase,amp=.38;
+        if(n.userData.legs[0])n.userData.legs[0].rotation.x=Math.sin(ph)*amp;
+        if(n.userData.legs[1])n.userData.legs[1].rotation.x=Math.sin(ph)*amp*.55;
+        if(n.userData.legs[2])n.userData.legs[2].rotation.x=-Math.sin(ph)*amp;
+        if(n.userData.legs[3])n.userData.legs[3].rotation.x=-Math.sin(ph)*amp*.55;}
     } else {n.userData.wAngle+=Math.PI;}
     // Police follow player if heat > 70
     if(n.userData.role==='police'&&G.heat>70){
@@ -1212,11 +1460,70 @@ function buildInterior(type){
 function addRoomNPC(role,x,y,z,emoji){
   const def=INDOOR_NPCDEFS[role]||NPCDEFS.find(d=>d.id===role);if(!def) return;
   const g=new THREE.Group();
-  box(.52,1.1,.4,def.col,0,1.0,0,0,.8,g);box(.52,.52,.5,0xf4c888,0,1.82,0,0,.7,g);
-  [-.15,.15].forEach(lx=>box(.23,.75,.23,0x2a3a88,lx,.375,0,0,.8,g));
+  const sk2=0xd4956a;
+  // Legs
+  [-.14,.14].forEach(lx=>{
+    const ul=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.48,8),new THREE.MeshStandardMaterial({color:0x223366,roughness:.85}));
+    ul.position.set(lx,.52,0);g.add(ul);
+    const ll=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.42,8),new THREE.MeshStandardMaterial({color:0x1a2a55,roughness:.85}));
+    ll.position.set(lx,.14,0);g.add(ll);
+    const sh=new THREE.Mesh(new THREE.BoxGeometry(.16,.09,.28),new THREE.MeshStandardMaterial({color:0x111111,roughness:.7}));
+    sh.position.set(lx,.045,.04);g.add(sh);
+  });
+  // Torso
+  const t2=new THREE.Mesh(new THREE.CylinderGeometry(.21,.19,.68,10),new THREE.MeshStandardMaterial({color:def.col,roughness:.8}));
+  t2.position.set(0,1.12,0);g.add(t2);
+  const belt2=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.055,10),new THREE.MeshStandardMaterial({color:0x333333,roughness:.6}));
+  belt2.position.set(0,.8,0);g.add(belt2);
+  // Arms
+  [-.26,.26].forEach(ax=>{
+    const ua=new THREE.Mesh(new THREE.CylinderGeometry(.075,.085,.35,8),new THREE.MeshStandardMaterial({color:def.col,roughness:.8}));
+    ua.position.set(ax*1.38,1.18,0);ua.rotation.z=ax>0?-.22:.22;g.add(ua);
+    const la=new THREE.Mesh(new THREE.CylinderGeometry(.065,.075,.3,8),new THREE.MeshStandardMaterial({color:sk2,roughness:.75}));
+    la.position.set(ax*1.6,.9,0);la.rotation.z=ax>0?-.18:.18;g.add(la);
+    const hd2=new THREE.Mesh(new THREE.SphereGeometry(.08,7,6),new THREE.MeshStandardMaterial({color:sk2,roughness:.7}));
+    hd2.position.set(ax*1.76,.76,0);g.add(hd2);
+  });
+  // Neck + Head
+  const nk=new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.16,8),new THREE.MeshStandardMaterial({color:sk2,roughness:.7}));
+  nk.position.set(0,1.54,0);g.add(nk);
+  const hd=new THREE.Mesh(new THREE.SphereGeometry(.24,12,10),new THREE.MeshStandardMaterial({color:sk2,roughness:.7}));
+  hd.scale.set(1,.95,1);hd.position.set(0,1.86,0);g.add(hd);
+  const jaw2=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),new THREE.MeshStandardMaterial({color:sk2,roughness:.75}));
+  jaw2.scale.set(1,.65,1);jaw2.position.set(0,1.69,.04);g.add(jaw2);
+  // Face
+  [-.095,.095].forEach(ex=>{
+    const ew=new THREE.Mesh(new THREE.SphereGeometry(.048,7,6),new THREE.MeshStandardMaterial({color:0xffffff}));
+    ew.position.set(ex,1.9,.21);g.add(ew);
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(.028,5,5),new THREE.MeshStandardMaterial({color:0x111111}));
+    ep.position.set(ex,1.9,.25);g.add(ep);
+  });
+  const ns=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),new THREE.MeshStandardMaterial({color:0xc08060,roughness:.8}));
+  ns.scale.set(.8,1,.5);ns.position.set(0,1.83,.25);g.add(ns);
+  const mt=new THREE.Mesh(new THREE.BoxGeometry(.09,.02,.03),new THREE.MeshStandardMaterial({color:0x8B4040}));
+  mt.position.set(0,1.74,.25);g.add(mt);
+  // Hair
+  const hairC2=def.role==='monk'?sk2:def.role==='police'?0x111155:0x1a1008;
+  const hr2=new THREE.Mesh(new THREE.SphereGeometry(.25,10,8),new THREE.MeshStandardMaterial({color:hairC2,roughness:.95}));
+  hr2.scale.set(1,.62,1);hr2.position.set(0,2.06,-.04);g.add(hr2);
+  // Role accessories (same as outdoor)
+  if(def.role==='police'||def.role==='police_indoor'){
+    const c2=new THREE.Mesh(new THREE.CylinderGeometry(.26,.28,.11,10),new THREE.MeshStandardMaterial({color:0x2233aa,roughness:.6}));c2.position.set(0,2.16,0);g.add(c2);
+  }
+  if(def.role==='doctor'){
+    const wc=new THREE.Mesh(new THREE.CylinderGeometry(.22,.20,.7,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7}));wc.position.set(0,1.1,0);g.add(wc);
+  }
+  if(def.role==='monk'){
+    const rb=new THREE.Mesh(new THREE.CylinderGeometry(.24,.26,.72,10),new THREE.MeshStandardMaterial({color:0xff8822,roughness:.85}));rb.position.set(0,1.08,0);g.add(rb);
+    hr2.material=new THREE.MeshStandardMaterial({color:sk2,roughness:.8});
+  }
+  if(def.role==='black_market'||def.role==='gangster_indoor'){
+    const hd3=new THREE.Mesh(new THREE.SphereGeometry(.30,10,8),new THREE.MeshStandardMaterial({color:0x111111,roughness:.9}));
+    hd3.scale.set(1,.75,1.1);hd3.position.set(0,2.0,-.04);g.add(hd3);
+  }
   // Label
   const lbl=new THREE.Sprite(new THREE.SpriteMaterial({map:makeNPCTex(emoji+' '+def.n),transparent:true}));
-  lbl.scale.set(2.4,.52,1);lbl.position.y=2.6;g.add(lbl);
+  lbl.scale.set(2.4,.52,1);lbl.position.y=2.75;g.add(lbl);
   g.position.set(x,y,z);IS.add(g);
   G.iItems.push({mesh:g,label:def.n,hint:'E - 与 '+def.n+' 对话',action:'npc_'+role,npcId:role});
 }
@@ -1224,10 +1531,8 @@ function addRoomNPC(role,x,y,z,emoji){
 function enterBuilding(bld){
   buildInterior(bld.int);
   G.inRoom=true;G.curRoom=bld;
-  document.body.classList.add('in-room');
-  resetMobileMoveKeys();
   document.getElementById('interior').style.display='block';
-  document.getElementById('rtitle').textContent=bld.n;
+  document.getElementById('rtitle').textContent=bld.n;if(bld.id==='hospital')completeQuest('m1');
   document.getElementById('ihint').style.display='none';
   if(G.plocked) document.exitPointerLock();
   G.iyaw=Math.PI;G.ipitch=0;G.ipx=0;G.ipz=4.5;
@@ -1237,8 +1542,6 @@ function enterBuilding(bld){
 document.getElementById('exitbtn').onclick=()=>exitBuilding();
 function exitBuilding(){
   G.inRoom=false;G.curRoom=null;G.nearIItem=null;
-  document.body.classList.remove('in-room');
-  resetMobileMoveKeys();
   document.getElementById('interior').style.display='none';
   document.getElementById('ihint').style.display='none';
   if(iAnim){cancelAnimationFrame(iAnim);iAnim=null;}
@@ -1251,7 +1554,7 @@ function exitBuilding(){
     setTimeout(()=>{
       if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&
          document.getElementById('dlg').style.display==='none'){
-        safePointerLock(cv);
+        cv.requestPointerLock();
       }
     },80);
   } else {
@@ -1259,7 +1562,7 @@ function exitBuilding(){
     setTimeout(()=>{
       if(!G.inRoom&&document.getElementById('panel').style.display==='none'&&
          document.getElementById('dlg').style.display==='none'){
-        safePointerLock(cv);
+        cv.requestPointerLock();
       }
     },80);
   }
@@ -1272,7 +1575,7 @@ function iLoop(){
   const irg=new THREE.Vector3(Math.cos(G.iyaw),0,-Math.sin(G.iyaw));
   const imv=new THREE.Vector3();
   if(K['w']) imv.add(ifwd);if(K['s']) imv.sub(ifwd);if(K['a']) imv.sub(irg);if(K['d']) imv.add(irg);
-  if(imv.length()>.01){imv.normalize();const ispd=K['shift']?4.8:3;G.ipx+=imv.x*ispd*dt;G.ipz+=imv.z*ispd*dt;}
+  if(imv.length()>.01){imv.normalize();G.ipx+=imv.x*3*dt;G.ipz+=imv.z*3*dt;}
   G.ipx=Math.max(-5.8,Math.min(5.8,G.ipx));G.ipz=Math.max(-5.5,Math.min(5.8,G.ipz));
   ICAM.position.set(G.ipx,1.65,G.ipz);
   ICAM.rotation.set(G.ipitch,G.iyaw,0,'YXZ');
@@ -1304,13 +1607,13 @@ function handleIAction(action,item){
   if(action==='exit_building'){exitBuilding();return;}
   if(action==='sleep') trySleep();
   else if(action==='forge') openFG();
-  else if(action.startsWith('shop_')){exitBuilding();openShop(action.split('_')[1]);}
-  else if(action==='sell'){exitBuilding();openSellPanel();}
-  else if(action==='bank'){exitBuilding();openBankPanel();}
+  else if(action.startsWith('shop_')){openShop(action.split('_')[1]);}
+  else if(action==='sell'){openSellPanel();}
+  else if(action==='bank'){openBankPanel();}
   else if(action==='inventory'){exitBuilding();openPanel('inv');}
   else if(action==='warehouse_ctrl'){exitBuilding();openPanel('warehouse');}
   else if(action.startsWith('work_')){const bid=action.replace('work_','');const wb=BLDS.find(b=>b.id===bid);if(wb){exitBuilding();openWorkPanel(wb);}}
-  else if(action==='storage'){exitBuilding();openStoragePanel();}
+  else if(action==='storage'){openStoragePanel();}
   else if(action==='pay_medical') payMedical();
   else if(action==='buy_intel') buyIntel();
   else if(action==='take_errand'){exitBuilding();startErrand();}
@@ -1376,12 +1679,12 @@ function showWantedBoard(){
 // FORGE MINI-GAME
 // ============================================================
 const RECIPES=[
-  {id:'f5',n:'假5元',icon:'💴',req:{paper:2,ink:1},steps:[{n:'准备特制纸张',i:'📄'},{n:'调配墨水配方',i:'🖊️'},{n:'对齐精密印版',i:'🎯'},{n:'施压高速印刷',i:'🖨️'},{n:'检查质量成品',i:'🔍'}],reward:8,heat:2,sk:'basicForgery',gn:'假5元'},
-  {id:'f20',n:'假20元',icon:'💵',req:{paper:3,ink:2},steps:[{n:'裁剪特种纸',i:'✂️'},{n:'调配彩色墨水',i:'🎨'},{n:'印刷正面图案',i:'🖨️'},{n:'印刷背面图案',i:'🖨️'},{n:'压膜热处理',i:'🔧'},{n:'质量精密检验',i:'🔍'}],reward:25,heat:4,sk:'midForgery',gn:'假20元'},
-  {id:'f100',n:'假100元',icon:'💶',req:{paper:5,ink:3},steps:[{n:'特种纸预处理',i:'📋'},{n:'校准印刷参数',i:'⚙️'},{n:'印刷底层纹路',i:'🖨️'},{n:'主图精确印刷',i:'🖨️'},{n:'嵌入安全特征',i:'🔒'},{n:'压制全息水印',i:'💧'},{n:'终极质检',i:'🔍'}],reward:80,heat:10,sk:'advForgery',gn:'假100元'},
-  {id:'fdoc',n:'假证件',icon:'📋',req:{paper:4,ink:2},steps:[{n:'扫描原版模板',i:'📸'},{n:'调整数字参数',i:'💻'},{n:'精确激光印刷',i:'🖨️'},{n:'添加防伪涂层',i:'🔒'},{n:'精密裁切成型',i:'✂️'}],reward:50,heat:7,sk:'midForgery',gn:'假证件'},
-  {id:'fshoe',n:'假名牌鞋',icon:'👟',req:{paper:1,ink:1},steps:[{n:'准备材料',i:'📦'},{n:'裁剪皮料',i:'✂️'},{n:'缝合成型',i:'🧵'},{n:'印刷标志',i:'🖨️'}],reward:35,heat:3,sk:'midForgery',gn:'假名牌鞋'},
-  {id:'fjewel',n:'假珠宝',icon:'💎',req:{paper:0,ink:1},steps:[{n:'准备树脂',i:'🧪'},{n:'调制颜色',i:'🎨'},{n:'灌模成型',i:'💎'},{n:'打磨抛光',i:'✨'},{n:'质量检验',i:'🔍'}],reward:60,heat:6,sk:'advForgery',gn:'假珠宝'},
+  {id:'f5',n:'假5元（一沓50张）',icon:'💴',req:{paper:2,ink:1},steps:[{n:'准备特制纸张',i:'📄'},{n:'调配墨水配方',i:'🖊️'},{n:'对齐精密印版',i:'🎯'},{n:'施压高速印刷',i:'🖨️'},{n:'检查质量成品',i:'🔍'}],reward:80,heat:2,sk:'basicForgery',gn:'假5元（50张）'},
+  {id:'f20',n:'假20元（一沓10张）',icon:'💵',req:{paper:3,ink:2},steps:[{n:'裁剪特种纸',i:'✂️'},{n:'调配彩色墨水',i:'🎨'},{n:'印刷正面图案',i:'🖨️'},{n:'印刷背面图案',i:'🖨️'},{n:'压膜热处理',i:'🔧'},{n:'质量精密检验',i:'🔍'}],reward:200,heat:4,sk:'midForgery',gn:'假20元（10张）'},
+  {id:'f100',n:'假100元（一沓10张）',icon:'💶',req:{paper:5,ink:3},steps:[{n:'特种纸预处理',i:'📋'},{n:'校准印刷参数',i:'⚙️'},{n:'印刷底层纹路',i:'🖨️'},{n:'主图精确印刷',i:'🖨️'},{n:'嵌入安全特征',i:'🔒'},{n:'压制全息水印',i:'💧'},{n:'终极质检',i:'🔍'}],reward:800,heat:10,sk:'advForgery',gn:'假100元（10张）'},
+  {id:'fdoc',n:'假证件',icon:'📋',req:{paper:4,ink:2},steps:[{n:'扫描原版模板',i:'📸'},{n:'调整数字参数',i:'💻'},{n:'精确激光印刷',i:'🖨️'},{n:'添加防伪涂层',i:'🔒'},{n:'精密裁切成型',i:'✂️'}],reward:150,heat:7,sk:'midForgery',gn:'假证件（5张）'},
+  {id:'fshoe',n:'假名牌鞋',icon:'👟',req:{paper:1,ink:1},steps:[{n:'准备材料',i:'📦'},{n:'裁剪皮料',i:'✂️'},{n:'缝合成型',i:'🧵'},{n:'印刷标志',i:'🖨️'}],reward:120,heat:3,sk:'midForgery',gn:'假名牌鞋（3双）'},
+  {id:'fjewel',n:'假珠宝',icon:'💎',req:{paper:0,ink:1},steps:[{n:'准备树脂',i:'🧪'},{n:'调制颜色',i:'🎨'},{n:'灌模成型',i:'💎'},{n:'打磨抛光',i:'✨'},{n:'质量检验',i:'🔍'}],reward:300,heat:6,sk:'advForgery',gn:'假珠宝（一套）'},
 ];
 
 // ============================================================
@@ -1655,14 +1958,18 @@ function finishFG(){
   if(fgR.req.paper>0) deductItem('paper',fgR.req.paper);
   deductItem('ink',fgR.req.ink);
   G.money+=fgR.reward;G.heat=Math.min(G.maxHeat,G.heat+fgR.heat);
-  G.totalMade++;G.totalEarned+=fgR.reward;
+  G.totalMade++;G.totalEarned+=fgR.reward;questProgress('m13');questProgress('m5');
   const ex=G.fakeGoods.find(g=>g.gn===fgR.gn);
   if(ex) ex.cnt++;else G.fakeGoods.push({gn:fgR.gn,icon:fgR.icon,cnt:1,val:fgR.reward});
   // EXP reward: basic=5, mid=12, adv=25, doc=15, shoe=8, jewel=18
   // Quest tracking
-  if(fgR.id==='f20'){const q8=G.quests.find(q=>q.id==='q8');if(q8&&!q8.done){q8.cnt=(q8.cnt||0)+1;if(q8.cnt>=q8.need)completeQuest('q8');else updateQuestLog();}}
-  if(fgR.id==='f100') completeQuest('q12');
-  const expTable={f5:5,f20:12,f100:25,fdoc:15,fshoe:8,fjewel:18};
+  // Quest tracking by recipe
+  if(fgR.id==='f5')  questProgress('m3');
+  if(fgR.id==='f20') questProgress('m9',0); // m9 is fdoc; m5 general
+  if(fgR.id==='fdoc') questProgress('m9');
+  if(fgR.id==='f100') completeQuest('m18');
+  questProgress('m5'); questProgress('m13');
+  const expTable={f5:8,f20:18,f100:40,fdoc:20,fshoe:12,fjewel:25};
   const expGain=expTable[fgR.id]||8;
   addExp(expGain);
   notify('⭐ 经验+'+expGain+' (总计:'+G.exp+')','i');
@@ -1698,7 +2005,7 @@ function giveItem(id,icon,name,n){
 const SHOPDATA={
   materials:[
     {id:'paper',icon:'📄',n:'纸张 x5',price:6,give:{id:'paper',icon:'📄',n:'纸张',cnt:5}},
-    {id:'paper2',icon:'📦',n:'纸张 x15',price:15,give:{id:'paper',icon:'📄',n:'纸张',cnt:15}},
+    {id:'paper2',icon:'📦',n:'纸张 x15',price:15,give:{id:'paper',icon:'📄',n:'纸张',cnt:15},onBuy:'m8'},
     {id:'ink',icon:'🖊️',n:'墨水 x3',price:5,give:{id:'ink',icon:'🖊️',n:'墨水',cnt:3}},
     {id:'ink2',icon:'🧴',n:'墨水 x10',price:14,give:{id:'ink',icon:'🖊️',n:'墨水',cnt:10}},
   ],
@@ -1747,9 +2054,10 @@ function openShop(cat){
 }
 window.buyShopItem=function(i,cat){
   const it=SHOPDATA[cat][i];if(!it) return;
+  if(cat==='materials') completeQuest('m7');
   if(G.money<it.price){notify('金钱不足！','w');return;}
   G.money-=it.price;
-  if(it.sp){G.st=Math.min(G.maxSt,G.st+it.sp);notify(`🍽️ ${it.icon} 体力+${it.sp}`);}
+  if(it.sp){G.st=Math.min(G.maxSt,G.st+it.sp);notify(`🍽️ ${it.icon} 体力+${it.sp}`);}if(it.onBuy)completeQuest(it.onBuy);
   if(it.heatDown){G.heat=Math.max(0,G.heat-it.heatDown);notify(`👕 换上${it.n}！热度-${it.heatDown}`,'g');playTone(523,.2,'sine',.08);}
   if(it.give){giveItem(it.give.id,it.give.icon,it.give.n||it.n,it.give.cnt);notify(`✅ 购买 ${it.n}`);}
   updateHUD();openShop(cat);
@@ -1770,7 +2078,7 @@ function openSellPanel(){
       <div style="flex:1"><div style="color:#ddd;font-size:13px">${g.gn} x${g.cnt}</div>
       <div style="color:#888;font-size:10px">每件 $${g.val} | 总 $${g.val*g.cnt}</div></div>
       <span class="rbadge ${rClass}">${catchPct}% 风险</span>
-      <button onclick="sellFake(${gi})" style="background:rgba(249,115,22,.1);border:1px solid #f97316;color:#f97316;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;margin-left:8px;pointer-events:all">出售1件</button>
+      <button onclick="openLaunderGame(${gi})" style="background:rgba(249,115,22,.1);border:1px solid #f97316;color:#f97316;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;margin-left:8px;pointer-events:all">🎮 洗钱游戏</button>
       <button onclick="sellAll(${gi})" style="background:rgba(239,68,68,.1);border:1px solid #ef4444;color:#ef4444;padding:5px 10px;border-radius:7px;cursor:pointer;font-size:11px;margin-left:4px;pointer-events:all">全卖</button>
     </div>`;
   });
@@ -1836,7 +2144,7 @@ function openBankPanel(){
     if(G.money<cost){notify('资金不足！','w');return;}
     G.money-=cost;G.heat=Math.max(0,G.heat-heatDown);
     notify(`💹 洗钱完成！热度-${heatDown}`,'i');updateHUD();openBankPanel();
-    completeQuest('q9');G.investLevel=Math.max(0,G.investLevel-1);updateInvestigation();
+    completeQuest('m19');const q20=G.quests.find(q=>q.id==='m20');if(q20&&!q20.done){q20.cnt=(q20.cnt||0)+heatDown*10;if(q20.cnt>=q20.need)completeQuest('m20');}G.investLevel=Math.max(0,G.investLevel-1);updateInvestigation();
   };
 }
 
@@ -1867,7 +2175,7 @@ window.hireGang=function(id){
   if(G.money<m.hire){notify('资金不足！','w');return;}
   G.money-=m.hire;G.gang.push(m);
   notify(`✅ 招募了 ${m.n}！${m.bonus}`,'g');
-  completeQuest('q7');updateHUD();openGangPanel();
+  questProgress('m12');updateHUD();openGangPanel();
   G.sf.gangUnlocked=true;
 };
 // Gang daily effects
@@ -1971,13 +2279,13 @@ window.buyBldg=function(id,price){
   if(G.money<price){notify('资金不足！','w');return;}
   G.money-=price;G.ownedBlds.push(id);
   const b=BLDS.find(x=>x.id===id);if(b){b.bought=true;b.own='你';}
-  notify(`🎉 成功购买 ${b?.n}！`,'g');G.sp++;if(b?.int==='factory')completeQuest('q6');else if(b?.int==='warehouse')completeQuest('q10');updateHUD();openPanel('props');
+  notify(`🎉 成功购买 ${b?.n}！`,'g');G.sp++;if(b?.int==='factory')completeQuest('m16');else if(b?.int==='warehouse')completeQuest('m11');updateHUD();openPanel('props');
   // unlock uncle gang speech
   if(G.ownedBlds.length>=2&&!G.sf.gangUnlocked){G.sf.gangUnlocked=true;notify('叔叔：阿南，是时候招募一些手下了！[G键]','i');}
 };
 document.getElementById('pclose').onclick=()=>{
   document.getElementById('panel').style.display='none';
-  if(!G.inRoom&&!G.sleeping) setTimeout(()=>safePointerLock(cv),50);
+  if(!G.inRoom&&!G.sleeping) setTimeout(()=>cv.requestPointerLock(),50);
 };
 function closeAll(){
   document.getElementById('panel').style.display='none';
@@ -1985,7 +2293,7 @@ function closeAll(){
   document.getElementById('fgame').style.display='none';
   // Re-acquire pointer lock if in world view
   if(!G.inRoom&&!G.sleeping){
-    setTimeout(()=>safePointerLock(cv),50);
+    setTimeout(()=>cv.requestPointerLock(),50);
   }
 }
 
@@ -1998,11 +2306,13 @@ function completeQuest(id){
 }
 function updateQuestLog(){
   const el=document.getElementById('qitems');
-  const active=G.quests.filter(q=>!q.done).slice(0,4);
+  const active=G.quests.filter(q=>!q.done).slice(0,3);
   el.innerHTML=active.map(q=>{
     const cntTxt=q.need?` (${q.cnt||0}/${q.need})`:''
     return `<div class="qi">○ ${q.txt}${cntTxt}</div>`;
   }).join('');
+  const done=G.quests.filter(q=>q.done).length;
+  el.innerHTML+=`<div style="color:#666;font-size:9px;margin-top:3px;">进度: ${done}/${G.quests.length}</div>`;
   if(!active.length) el.innerHTML='<div class="qi" style="color:#4ade80">🎉 全部完成！</div>';
 }
 
@@ -2040,14 +2350,14 @@ function buildDlgChoices(def){
   else if(r==='mother') cs=['妈妈我会筹到钱的！','最近身体好些了吗？','需要多少医药费？','再见妈妈'];
   else if(r==='uncle') cs=['教我技术！','最近风声怎样？','怎么洗钱？','告诉我关于帮派','告辞叔叔'];
   else if(r==='trader') cs=['买材料','买食物','有特殊货吗？','告辞'];
-  else if(r==='black_market') cs=['我要特殊材料','告辞'];
+  else if(r==='black_market') cs=['我要特殊材料','帮我销赃','告辞'];
   else if(r==='police') cs=['我只是路过','附近有什么可疑人？','好的，再见'];
   else if(r==='doctor') cs=['需要多少医药费？','我现在缴费','改天再来'];
   else if(r==='gangster') cs=['我要招募你','我不需要','告辞'];
   else if(r==='barkeep') cs=['买情报$50','有没有传言？','告辞'];
   else if(r==='passerby') cs=['你好！','这附近有什么好玩的？','告辞'];
   else if(r==='monk') cs=['请为我祈祷','你在这里多久了？','告辞'];
-  else if(r==='gangster_indoor') cs=['我要招募你','今天有什么消息？','告辞'];
+  else if(r==='gangster_indoor'){cs=['我要招募你','今天有什么消息？','告辞'];completeQuest('m14');}
   else if(r==='barkeep_indoor') cs=['买情报$50','有没有特殊消息？','告辞'];
   else if(r==='police_indoor') cs=['我只是路过','这里有什么规定？','告辞'];
   else if(r==='market_keeper') cs=['买材料','买食物','买服装','告辞'];
@@ -2446,7 +2756,7 @@ function handleUncleTeach(){
   if(!G.sf.uncle1){
     // First time — teach and give EXP
     G.sf.uncle1=true;
-    completeQuest('q2');
+    completeQuest('m2');
     const bonus=20;addExp(bonus);
     notify('📚 叔叔达拉传授了基础技巧！经验+'+bonus,'g');
     setTimeout(()=>notify('叔叔：「来，跟我去工作台，我教你第一步...」',''),1200);
@@ -2565,7 +2875,7 @@ function tickWork(dt){
     G.money+=workReward;
     const ov=document.getElementById('work-overlay');
     if(ov) ov.style.display='none';
-    notify(`✅ 打工完成！获得 $${workReward}`,'g');
+    notify(`✅ 打工完成！获得 $${workReward}`,'g');questProgress('m15');
     updateHUD();
     completeQuest('q3');// counts as earning
   }
@@ -2781,6 +3091,7 @@ function addExp(amount){
     if(!G.skills[sk]&&G.exp>=EXP_THRESHOLDS[sk]){
       G.skills[sk]=true;
       notify('🌟 经验解锁技能：'+SKILL_NAMES[sk]+'！','g');
+      if(sk==='autoPress') completeQuest('m17');
     }
   });
 }
@@ -2953,7 +3264,7 @@ let storyIdx=0;
 document.getElementById('storyt').textContent=STORY[0].t;
 document.getElementById('storybtn').onclick=()=>{
   storyIdx++;
-  if(storyIdx>=STORY.length){document.getElementById('story').style.display='none';safePointerLock(cv);return;}
+  if(storyIdx>=STORY.length){document.getElementById('story').style.display='none';cv.requestPointerLock();return;}
   document.getElementById('storyn').textContent=STORY[storyIdx].n;
   document.getElementById('storyt').textContent=STORY[storyIdx].t;
 };
@@ -3099,6 +3410,202 @@ document.addEventListener('click',initAudio,{once:true});
 document.addEventListener('keydown',initAudio,{once:true});
 
 // ============================================================
+// LAUNDER MINI-GAME
+// ============================================================
+let lgGoods=null,lgStep=0,lgSusp=0,lgDone=false;
+const LG_EVENTS=[
+  {txt:'收银员抬头看了你一眼...',susp:8},
+  {txt:'旁边顾客注意到你的钱包...',susp:5},
+  {txt:'摄像头对准了收银台...',susp:6},
+  {txt:'收银员皱眉，检查钱币...',susp:15},
+  {txt:'店里进来一个便衣警察...',susp:20},
+  {txt:'一切正常，没人注意你。',susp:-3},
+  {txt:'收银员聊起天气，气氛轻松。',susp:-5},
+  {txt:'人流量大，没人在意你。',susp:-4},
+];
+const LG_ACTS={
+  casual:{susp:-5,progress:20,txt:'你装作普通顾客，随手挑了件商品...'},
+  fast:{susp:12,progress:35,txt:'快速递出钞票，找零，走人...'},
+  distract:{susp:-8,progress:15,txt:'你找话题转移收银员注意力...'},
+};
+
+function openLaunderGame(goodsIdx){
+  const g=G.fakeGoods[goodsIdx];if(!g||g.cnt<1) return;
+  lgGoods=g;lgStep=0;lgSusp=0;lgDone=false;
+  if(G.plocked) document.exitPointerLock();
+  if(G.ilocked) document.exitPointerLock();
+  document.getElementById('lgscene').style.display='block';
+  document.getElementById('lgresult').style.display='none';
+  document.getElementById('lgactions').style.display='flex';
+  document.getElementById('lgplayer').style.left='16px';
+  document.getElementById('lgstep').textContent='0/4';
+  document.getElementById('lglog').textContent='找一个安静的收银台...';
+  document.getElementById('lgbubble').style.display='none';
+  updateLGSusp(0);
+  const fg=document.getElementById('lgame');fg.style.display='flex';fg.style.alignItems='center';fg.style.justifyContent='center';
+  document.getElementById('lgtitle').textContent='💸 洗假钞：'+g.gn;
+  // Random event trigger
+  lgEventTimer();
+}
+let lgEvtTimeout=null;
+function lgEventTimer(){
+  if(lgDone) return;
+  const delay=3000+Math.random()*4000;
+  lgEvtTimeout=setTimeout(()=>{
+    if(lgDone) return;
+    const evt=LG_EVENTS[Math.floor(Math.random()*LG_EVENTS.length)];
+    showLGLog(evt.txt,evt.susp>0?'#f97316':'#4ade80');
+    updateLGSusp(lgSusp+evt.susp);
+    if(lgSusp>=100){lgFail('被发现了！收银员叫来了经理...');return;}
+    lgEventTimer();
+  },delay);
+}
+window.lgAct=function(act){
+  if(lgDone) return;
+  const a=LG_ACTS[act];
+  showLGLog(a.txt,a.susp>0?'#f97316':'#4ade80');
+  updateLGSusp(lgSusp+a.susp);
+  lgStep+=a.progress;
+  const pct=Math.min(100,lgStep/100*100);
+  document.getElementById('lgplayer').style.left=Math.min(55,16+pct*.4)+'%';
+  document.getElementById('lgstep').textContent=Math.floor(pct/25)+'/4';
+  if(lgSusp>=100){lgFail('操作太慌张，收银员起疑心了！');return;}
+  if(lgStep>=100){lgSuccess();}
+};
+function updateLGSusp(v){
+  lgSusp=Math.max(0,Math.min(100,v));
+  document.getElementById('lgsuspfill').style.width=lgSusp+'%';
+  document.getElementById('lgsusp-txt').textContent=Math.floor(lgSusp)+'%';
+}
+function showLGLog(txt,col){
+  const el=document.getElementById('lglog');el.textContent=txt;el.style.color=col||'#aaa';
+  const bub=document.getElementById('lgbubble');bub.textContent=txt.slice(0,20)+'...';bub.style.display='block';
+  setTimeout(()=>{if(bub)bub.style.display='none';},2500);
+}
+function lgSuccess(){
+  lgDone=true;clearTimeout(lgEvtTimeout);
+  const earn=lgGoods.val;
+  G.money+=earn;
+  lgGoods.cnt--;if(lgGoods.cnt<=0){const idx=G.fakeGoods.indexOf(lgGoods);if(idx>=0)G.fakeGoods.splice(idx,1);}
+  G.heat=Math.min(G.maxHeat,G.heat+3);
+  // Quest tracking m6
+  const q6=G.quests.find(q=>q.id==='m6');if(q6&&!q6.done){q6.cnt=(q6.cnt||0)+1;if(q6.cnt>=q6.need)completeQuest('m6');else updateQuestLog();}
+  // Quest m10 fake20
+  if(lgGoods.gn.includes('20')){const q10=G.quests.find(q=>q.id==='m10');if(q10)completeQuest('m10');}
+  showLGResult('✅','交易成功！','+$'+earn+' | 热度+3','#4ade80');
+  notify('💸 洗钱成功 +$'+earn,'g');updateHUD();updateQuestLog();
+}
+function lgFail(reason){
+  lgDone=true;clearTimeout(lgEvtTimeout);
+  const catchPct=G.skills.finance2?5:G.skills.finance1?15:30;
+  if(Math.random()*100<catchPct){
+    G.heat=Math.min(G.maxHeat,G.heat+35);
+    lgGoods.cnt--;if(lgGoods.cnt<=0){const idx=G.fakeGoods.indexOf(lgGoods);if(idx>=0)G.fakeGoods.splice(idx,1);}
+    showLGResult('🚨','被发现了！',reason+' 假钞没收 | 热度+35','#ef4444');
+    notify('🚨 洗钱失败！被发现！','d');G.investLevel=Math.min(4,G.investLevel+1);updateInvestigation();
+  } else {
+    showLGResult('😅','虚惊一场','怀疑度太高，赶紧离开...','#f97316');
+    notify('⚠ 太危险，撤退！怀疑度重置','w');
+  }
+  updateHUD();
+}
+function showLGResult(icon,title,desc,col){
+  document.getElementById('lgscene').style.display='none';
+  document.getElementById('lgactions').style.display='none';
+  document.getElementById('lgresult').style.display='block';
+  document.getElementById('lgri').textContent=icon;
+  document.getElementById('lgrt').textContent=title;document.getElementById('lgrt').style.color=col;
+  document.getElementById('lgrd').textContent=desc;
+}
+window.closeLG=function(){document.getElementById('lgame').style.display='none';lgGoods=null;if(!G.inRoom&&!G.sleeping)setTimeout(()=>cv.requestPointerLock(),60);};
+
+// ============================================================
+// PHONE UI SYSTEM
+// ============================================================
+function openPhone(){
+  if(G.plocked) document.exitPointerLock();
+  openPanel('custom');
+  document.getElementById('ptitle').textContent='📱 手机';
+  const contacts=[
+    {name:'叔叔达拉',icon:'👨‍🦱',role:'uncle',status:'活跃',note:'引路人，传授制作技术'},
+    {name:'博里（黑市）',icon:'🕵️',role:'black_market',status:G.skills.midForgery?'已联系':'未解锁',note:'特殊材料供应商'},
+    {name:'宋帕（市场）',icon:'👨‍💼',role:'trader',status:'活跃',note:'材料和食物供应'},
+    ...G.gang.map(m=>({name:m.n,icon:m.icon,role:'gang',status:'在职',note:m.bonus})),
+  ];
+  const fences=[
+    {name:'线人阿康',icon:'🤝',cut:0.7,note:'销赃利润×70%，风险极低'},
+    {name:'买家纳里',icon:'💼',cut:0.85,note:'销赃利润×85%，有一定风险'},
+  ];
+  let h=`<div class="tabs" style="margin-bottom:14px;">
+    <div class="tab on" id="tab-contacts" onclick="phoneTab('contacts')">联系人</div>
+    <div class="tab" id="tab-fence" onclick="phoneTab('fence')">线下销赃</div>
+    <div class="tab" id="tab-memo" onclick="phoneTab('memo')">备忘录</div>
+  </div>
+  <div id="phone-contacts">`;
+  contacts.forEach(c=>{
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.09);border-radius:9px;margin-bottom:7px;">
+      <span style="font-size:24px;">${c.icon}</span>
+      <div style="flex:1;"><div style="color:#ddd;font-size:13px;">${c.name}</div>
+      <div style="color:#888;font-size:10px;">${c.note}</div></div>
+      <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${c.status==='活跃'||c.status==='在职'?'rgba(74,222,128,.15)':'rgba(255,255,255,.07)'};color:${c.status==='活跃'||c.status==='在职'?'#4ade80':'#888'};">${c.status}</span>
+    </div>`;
+  });
+  h+=`</div>
+  <div id="phone-fence" style="display:none;">
+    <div style="color:#888;font-size:11px;margin-bottom:12px;">通过线人销赃，利润减少但风险更低</div>`;
+  if(G.fakeGoods.length===0){
+    h+=`<div style="color:#555;text-align:center;padding:20px;">暂无可销售赃品</div>`;
+  } else {
+    G.fakeGoods.forEach((g,gi)=>{
+      fences.forEach((f,fi)=>{
+        const earn=Math.floor(g.val*f.cut);
+        h+=`<div style="display:flex;align-items:center;gap:9px;padding:9px;border:1px solid rgba(255,255,255,.09);border-radius:8px;margin-bottom:6px;">
+          <span>${g.icon}</span><div style="flex:1;"><div style="color:#ddd;font-size:12px;">${g.gn} → ${f.name}</div>
+          <div style="color:#888;font-size:10px;">$${earn}（原价$${g.val}，${Math.floor(f.cut*100)}%利润）${f.note}</div></div>
+          <button onclick="fenceSell(${gi},${fi})" style="background:rgba(249,115,22,.1);border:1px solid #f97316;color:#f97316;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;pointer-events:all;">委托</button>
+        </div>`;
+      });
+    });
+  }
+  h+=`</div>
+  <div id="phone-memo" style="display:none;">
+    <div style="color:#888;font-size:11px;margin-bottom:10px;">系统自动记录</div>
+    <div style="background:rgba(255,255,255,.03);border-radius:9px;padding:12px;font-size:12px;color:#aaa;line-height:1.9;">
+    📌 第${G.day}天 | 时间 ${document.getElementById('tv')?.textContent||'--'}
+    <br>💰 身上现金: $${G.money} | 箱内: $${G.storage?.money||0}
+    <br>🌡️ 热度: ${Math.floor(G.heat)}/100 | 调查等级: ${G.investLevel}/4
+    <br>⭐ 经验值: ${G.exp} | 技能解锁: ${Object.values(G.skills).filter(Boolean).length}/8
+    <br>📦 库存: ${G.fakeGoods.map(g=>g.gn+'×'+g.cnt).join(', ')||'空'}
+    <br>👥 帮派成员: ${G.gang.length}人
+    <br>🏭 拥有建筑: ${G.ownedBlds.length}栋
+    </div>
+  </div>`;
+  document.getElementById('pcontent').innerHTML=h;
+  window.phoneTab=function(tab){
+    ['contacts','fence','memo'].forEach(t=>{
+      document.getElementById('phone-'+t).style.display=t===tab?'block':'none';
+      document.getElementById('tab-'+t).classList.toggle('on',t===tab);
+    });
+  };
+  window.fenceSell=function(gi,fi){
+    const g=G.fakeGoods[gi];const f=fences[fi];
+    if(!g||g.cnt<1) return;
+    const earn=Math.floor(g.val*f.cut);
+    G.money+=earn;g.cnt--;if(g.cnt<=0)G.fakeGoods.splice(gi,1);
+    notify('🤝 '+f.name+'帮你销赃 +$'+earn,'i');
+    updateHUD();openPhone();
+  };
+}
+
+// Quest wiring helpers
+function questProgress(id,amount){
+  const q=G.quests.find(q=>q.id===id);
+  if(!q||q.done) return;
+  if(q.need){q.cnt=(q.cnt||0)+(amount||1);if(q.cnt>=q.need)completeQuest(id);else updateQuestLog();}
+  else completeQuest(id);
+}
+
+// ============================================================
 // MAIN LOOP
 // ============================================================
 function animate(){
@@ -3109,7 +3616,6 @@ function animate(){
   }
   if(!G.inRoom) R.render(S,CAM);
 }
-setupMobileControls();
 updateHUD();updateTimeHUD();updateQuestLog();updateExpHUD();animate();
 
 // Tips
